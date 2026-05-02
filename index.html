@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Конструктор слоёв для СТО</title>
+    <title>Конструктор слоёв СТО</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         * { box-sizing: border-box; }
@@ -44,6 +44,10 @@
             color: #1e293b;
             border: 1px solid #cbd5e1;
         }
+        .btn-small {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+        }
         .upload-area {
             background: #fefce8;
             border: 2px dashed #cbd5e1;
@@ -74,10 +78,6 @@
             padding: 12px;
             text-align: center;
         }
-        .btn-small {
-            padding: 6px 14px;
-            font-size: 0.75rem;
-        }
         .download-all-btn {
             background: #8b5cf6;
             width: 100%;
@@ -85,6 +85,7 @@
             font-size: 1rem;
             margin-top: 16px;
         }
+        /* Модальное окно конструктора */
         .modal {
             display: none;
             position: fixed;
@@ -100,7 +101,7 @@
             border-radius: 32px;
             max-width: 95vw;
             max-height: 90vh;
-            width: 1300px;
+            width: 1400px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -123,7 +124,7 @@
             flex-wrap: wrap;
         }
         .layers-sidebar {
-            width: 300px;
+            width: 340px;
             background: #f8fafc;
             border-radius: 24px;
             padding: 16px;
@@ -131,6 +132,7 @@
             flex-direction: column;
             gap: 16px;
             overflow-y: auto;
+            max-height: 100%;
         }
         .canvas-area {
             flex: 1;
@@ -154,7 +156,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 400px;
+            max-height: 280px;
             overflow-y: auto;
         }
         .layer-item {
@@ -168,7 +170,11 @@
             cursor: pointer;
             transition: 0.1s;
         }
-        .layer-item.active {
+        .layer-item.selected-main {
+            border: 2px solid #f97316;
+            background: #fff7ed;
+        }
+        .layer-item.selected-multi {
             border: 2px solid #3b82f6;
             background: #eff6ff;
         }
@@ -244,6 +250,48 @@
             margin: 6px 0 2px;
         }
         input[type="range"] { width: 100%; }
+        .size-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .size-row input {
+            width: 70px;
+            padding: 4px 6px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+        }
+        .lock-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px 6px;
+            color: #475569;
+        }
+        .align-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+        .align-btn {
+            background: #e2e8f0;
+            color: #1e293b;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+        }
+        .bg-preview {
+            width: 30px;
+            height: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -283,7 +331,7 @@
                     </div>
                 </div>
                 <div id="layerList" class="layer-list"></div>
-                <div id="layerProperties">
+                <div id="layerProperties" style="overflow-y: auto; max-height: 50%;">
                     <div class="prop-group">
                         <label>🌀 Прозрачность (0-1)</label>
                         <input type="range" id="propOpacity" min="0" max="1" step="0.01" value="1">
@@ -292,9 +340,51 @@
                         <label>🎨 Цвет текста</label>
                         <input type="color" id="propColor" value="#ffffff">
                     </div>
+                    <!-- Настройки фона текста -->
+                    <div class="prop-group" id="textBgGroup">
+                        <label>📦 Фон текста</label>
+                        <div class="size-row">
+                            <input type="color" id="textBgColor" value="#000000">
+                            <span>Прозр.:</span>
+                            <input type="range" id="textBgOpacity" min="0" max="1" step="0.01" value="0.5" style="width:80px;">
+                            <span>Скругл.:</span>
+                            <input type="number" id="textBgRadius" min="0" max="50" value="8" style="width:50px;">px
+                        </div>
+                        <div class="size-row">
+                            <span>Отступ X:</span>
+                            <input type="number" id="textBgPadX" value="8" style="width:50px;">px
+                            <span>Отступ Y:</span>
+                            <input type="number" id="textBgPadY" value="4" style="width:50px;">px
+                        </div>
+                    </div>
                     <div class="prop-group" id="propImageUploadGroup">
                         <label>🖼️ Заменить изображение</label>
                         <input type="file" id="propImageUpload" accept="image/png,image/jpeg,image/webp">
+                    </div>
+                    <div class="prop-group" id="propSizeGroup">
+                        <label>📐 Размеры</label>
+                        <div class="size-row">
+                            <span>Ширина:</span>
+                            <input type="number" id="sizeWidth" step="1">
+                            <span>Высота:</span>
+                            <input type="number" id="sizeHeight" step="1">
+                            <button id="lockAspectBtn" class="lock-btn" title="Сохранять пропорции">🔒</button>
+                        </div>
+                        <div class="size-row" id="fontSizeRow" style="display:none;">
+                            <span>Размер шрифта:</span>
+                            <input type="number" id="fontSizeInput" step="1">
+                        </div>
+                    </div>
+                    <div class="prop-group" id="alignGroup">
+                        <label>📐 Выравнивание</label>
+                        <div class="align-buttons">
+                            <button class="align-btn" data-align="left">⬅️ По левому краю</button>
+                            <button class="align-btn" data-align="right">➡️ По правому краю</button>
+                            <button class="align-btn" data-align="top">⬆️ По верхнему краю</button>
+                            <button class="align-btn" data-align="bottom">⬇️ По нижнему краю</button>
+                            <button class="align-btn" data-align="hcenter">↔️ По центру (гор.)</button>
+                            <button class="align-btn" data-align="vcenter">↕️ По центру (верт.)</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -304,7 +394,7 @@
         </div>
         <div class="modal-footer">
             <button id="cancelConstructorBtn" class="btn-outline">Отмена</button>
-            <button id="applyConstructorBtn">✅ Применить и закрыть</button>
+            <button id="applyConstructorBtn">✅ Закрыть</button>
         </div>
     </div>
 </div>
@@ -314,13 +404,14 @@
     let portraitLayers = [];
     let landscapeLayers = [];
     let activeOrientation = "portrait";
-    let selectedLayerId = null;
+    let selectedLayerIds = [];
     let dragTarget = null;
     let dragOffset = { x: 0, y: 0 };
     let isResizing = false;
     let resizeStart = { x: 0, y: 0, width: 0, height: 0, fontSize: 0 };
     
-    let tempLayers = [];  // копия для конструктора
+    let tempLayers = [];
+    let aspectLock = true;
     
     const portraitSize = { w: 2250, h: 3000 };
     const landscapeSize = { w: 3000, h: 2250 };
@@ -346,6 +437,7 @@
         if (activeOrientation === 'portrait') portraitLayers = layers;
         else landscapeLayers = layers;
         saveToLocalStorage();
+        renderAllPreviews();
     }
     
     function generateId(prefix) {
@@ -356,13 +448,13 @@
         const data = {
             portraitLayers,
             landscapeLayers,
-            version: 6
+            version: 8
         };
-        localStorage.setItem('sto_constructor_v6', JSON.stringify(data));
+        localStorage.setItem('sto_constructor_v8', JSON.stringify(data));
     }
     
     function loadFromLocalStorage() {
-        const saved = localStorage.getItem('sto_constructor_v6');
+        const saved = localStorage.getItem('sto_constructor_v8');
         if (saved) {
             try {
                 const data = JSON.parse(saved);
@@ -372,9 +464,9 @@
         }
         if (!portraitLayers || portraitLayers.length === 0) {
             portraitLayers = [
-                { id: generateId('text'), type: 'text', text: 'ДИАГНОСТИКА', fontSize: 48, color: '#ffffff', x: 120, y: 280, opacity: 1, visible: true },
-                { id: generateId('text'), type: 'text', text: 'ГАРАНТИЯ', fontSize: 48, color: '#ffffff', x: 120, y: 380, opacity: 1, visible: true },
-                { id: generateId('text'), type: 'text', text: 'БЫСТРЫЙ РЕМОНТ', fontSize: 48, color: '#ffffff', x: 120, y: 480, opacity: 1, visible: true }
+                { id: generateId('text'), type: 'text', text: 'ДИАГНОСТИКА', fontSize: 48, color: '#ffffff', bgColor: '#000000', bgOpacity: 0.5, bgRadius: 8, bgPadX: 8, bgPadY: 4, x: 120, y: 280, opacity: 1, visible: true },
+                { id: generateId('text'), type: 'text', text: 'ГАРАНТИЯ', fontSize: 48, color: '#ffffff', bgColor: '#000000', bgOpacity: 0.5, bgRadius: 8, bgPadX: 8, bgPadY: 4, x: 120, y: 380, opacity: 1, visible: true },
+                { id: generateId('text'), type: 'text', text: 'БЫСТРЫЙ РЕМОНТ', fontSize: 48, color: '#ffffff', bgColor: '#000000', bgOpacity: 0.5, bgRadius: 8, bgPadX: 8, bgPadY: 4, x: 120, y: 480, opacity: 1, visible: true }
             ];
         }
         if (!landscapeLayers || landscapeLayers.length === 0) {
@@ -384,12 +476,20 @@
         [portraitLayers, landscapeLayers].forEach(layers => {
             layers.forEach(layer => {
                 if (!layer.id) layer.id = generateId(layer.type);
+                // Добавляем поля фона, если их нет
+                if (layer.type === 'text') {
+                    if (layer.bgColor === undefined) layer.bgColor = '#000000';
+                    if (layer.bgOpacity === undefined) layer.bgOpacity = 0.5;
+                    if (layer.bgRadius === undefined) layer.bgRadius = 8;
+                    if (layer.bgPadX === undefined) layer.bgPadX = 8;
+                    if (layer.bgPadY === undefined) layer.bgPadY = 4;
+                }
             });
         });
         saveToLocalStorage();
     }
     
-    // Добавление текстового слоя
+    // Добавление слоёв
     function addTextLayer() {
         const newLayer = {
             id: generateId('text'),
@@ -397,19 +497,23 @@
             text: 'Новый текст',
             fontSize: 40,
             color: '#ffffff',
+            bgColor: '#000000',
+            bgOpacity: 0.5,
+            bgRadius: 8,
+            bgPadX: 8,
+            bgPadY: 4,
             x: 200,
             y: 200,
             opacity: 1,
             visible: true
         };
         tempLayers.push(newLayer);
-        selectedLayerId = newLayer.id;
+        selectedLayerIds = [newLayer.id];
         updateLayerListUI();
         drawCanvas();
         saveTempToCurrent();
     }
     
-    // Добавление графического слоя (сразу открываем выбор файла)
     function addImageLayer() {
         const newLayer = {
             id: generateId('img'),
@@ -422,12 +526,11 @@
             visible: true
         };
         tempLayers.push(newLayer);
-        selectedLayerId = newLayer.id;
+        selectedLayerIds = [newLayer.id];
         updateLayerListUI();
         drawCanvas();
         saveTempToCurrent();
         
-        // Открываем диалог выбора файла для этого слоя
         setTimeout(() => {
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -440,7 +543,6 @@
                         const layer = tempLayers.find(l => l.id === newLayer.id);
                         if (layer) {
                             layer.imageData = ev.target.result;
-                            // Обновляем отображение в списке слоёв
                             updateLayerListUI();
                             drawCanvas();
                             saveTempToCurrent();
@@ -455,9 +557,8 @@
     
     function deleteLayer(layerId) {
         tempLayers = tempLayers.filter(l => l.id !== layerId);
-        if (selectedLayerId === layerId) {
-            selectedLayerId = tempLayers.length > 0 ? tempLayers[0].id : null;
-        }
+        selectedLayerIds = selectedLayerIds.filter(id => id !== layerId);
+        if (selectedLayerIds.length === 0 && tempLayers.length > 0) selectedLayerIds = [tempLayers[0].id];
         updateLayerListUI();
         drawCanvas();
         saveTempToCurrent();
@@ -473,35 +574,183 @@
         }
     }
     
-    function updateOpacity(value) {
-        const layer = tempLayers.find(l => l.id === selectedLayerId);
-        if (layer) {
-            layer.opacity = parseFloat(value);
-            drawCanvas();
-            saveTempToCurrent();
+    // Выравнивание
+    function alignLayers(alignType) {
+        if (selectedLayerIds.length === 0) return;
+        const targetSize = getCurrentTemplateSize();
+        let layersToAlign = tempLayers.filter(l => selectedLayerIds.includes(l.id));
+        if (layersToAlign.length === 0) return;
+        
+        if (layersToAlign.length === 1) {
+            const layer = layersToAlign[0];
+            if (layer.type === 'text') {
+                ctx.font = `${layer.fontSize}px system-ui`;
+                const metrics = ctx.measureText(layer.text);
+                const w = metrics.width;
+                const h = layer.fontSize;
+                switch(alignType) {
+                    case 'left': layer.x = 0; break;
+                    case 'right': layer.x = targetSize.w - w; break;
+                    case 'top': layer.y = 0; break;
+                    case 'bottom': layer.y = targetSize.h - h; break;
+                    case 'hcenter': layer.x = (targetSize.w - w) / 2; break;
+                    case 'vcenter': layer.y = (targetSize.h - h) / 2; break;
+                }
+            } else {
+                let h = layer.width;
+                if (layer.imageData) {
+                    const img = new Image();
+                    img.src = layer.imageData;
+                    if (img.complete) h = layer.width * (img.height / img.width);
+                }
+                switch(alignType) {
+                    case 'left': layer.x = 0; break;
+                    case 'right': layer.x = targetSize.w - layer.width; break;
+                    case 'top': layer.y = 0; break;
+                    case 'bottom': layer.y = targetSize.h - h; break;
+                    case 'hcenter': layer.x = (targetSize.w - layer.width) / 2; break;
+                    case 'vcenter': layer.y = (targetSize.h - h) / 2; break;
+                }
+            }
+        } else {
+            // групповое выравнивание (упрощённо – по первому слою)
+            const refLayer = layersToAlign[0];
+            if (alignType === 'left') {
+                layersToAlign.forEach(l => l.x = refLayer.x);
+            } else if (alignType === 'right') {
+                layersToAlign.forEach(l => {
+                    if (l.type === 'text') {
+                        ctx.font = `${l.fontSize}px system-ui`;
+                        const w = ctx.measureText(l.text).width;
+                        l.x = refLayer.x + (refLayer.type === 'text' ? ctx.measureText(refLayer.text).width : refLayer.width) - w;
+                    } else {
+                        l.x = refLayer.x + refLayer.width - l.width;
+                    }
+                });
+            } else if (alignType === 'top') {
+                layersToAlign.forEach(l => l.y = refLayer.y);
+            } else if (alignType === 'bottom') {
+                layersToAlign.forEach(l => {
+                    if (l.type === 'text') l.y = refLayer.y + refLayer.fontSize - l.fontSize;
+                    else {
+                        let hRef = refLayer.width, hCur = l.width;
+                        if (refLayer.imageData) {
+                            const img = new Image();
+                            img.src = refLayer.imageData;
+                            if (img.complete) hRef = refLayer.width * (img.height / img.width);
+                        }
+                        if (l.imageData) {
+                            const img = new Image();
+                            img.src = l.imageData;
+                            if (img.complete) hCur = l.width * (img.height / img.width);
+                        }
+                        l.y = refLayer.y + hRef - hCur;
+                    }
+                });
+            } else if (alignType === 'hcenter') {
+                const centerX = refLayer.x + (refLayer.type === 'text' ? ctx.measureText(refLayer.text).width : refLayer.width) / 2;
+                layersToAlign.forEach(l => {
+                    if (l.type === 'text') {
+                        const w = ctx.measureText(l.text).width;
+                        l.x = centerX - w/2;
+                    } else {
+                        l.x = centerX - l.width/2;
+                    }
+                });
+            } else if (alignType === 'vcenter') {
+                const centerY = refLayer.y + (refLayer.type === 'text' ? refLayer.fontSize : (refLayer.imageData ? refLayer.width * (new Image().height/refLayer.width) : refLayer.width)) / 2;
+                layersToAlign.forEach(l => {
+                    if (l.type === 'text') l.y = centerY - l.fontSize/2;
+                    else {
+                        let h = l.width;
+                        if (l.imageData) {
+                            const img = new Image();
+                            img.src = l.imageData;
+                            if (img.complete) h = l.width * (img.height / img.width);
+                        }
+                        l.y = centerY - h/2;
+                    }
+                });
+            }
+        }
+        drawCanvas();
+        saveTempToCurrent();
+    }
+    
+    // Обновление размеров из полей
+    function updateSizeFromInputs() {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+        if (!layer) return;
+        const widthInput = document.getElementById('sizeWidth');
+        const heightInput = document.getElementById('sizeHeight');
+        let newWidth = parseInt(widthInput.value, 10);
+        if (isNaN(newWidth)) return;
+        if (layer.type === 'text') {
+            layer.fontSize = Math.min(200, Math.max(12, newWidth));
+            document.getElementById('fontSizeInput').value = layer.fontSize;
+        } else {
+            if (aspectLock && layer.imageData) {
+                const img = new Image();
+                img.src = layer.imageData;
+                if (img.complete) {
+                    const ratio = img.height / img.width;
+                    layer.width = newWidth;
+                    // высоту не сохраняем отдельно
+                } else {
+                    img.onload = () => {
+                        const ratio = img.height / img.width;
+                        layer.width = newWidth;
+                        drawCanvas();
+                        saveTempToCurrent();
+                    };
+                    return;
+                }
+            } else {
+                layer.width = newWidth;
+            }
+        }
+        drawCanvas();
+        saveTempToCurrent();
+    }
+    
+    function updateHeightFromInput() {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+        if (!layer || layer.type !== 'image') return;
+        if (!aspectLock) {
+            const heightInput = document.getElementById('sizeHeight');
+            let newHeight = parseInt(heightInput.value, 10);
+            if (isNaN(newHeight)) return;
+            if (layer.imageData) {
+                const img = new Image();
+                img.src = layer.imageData;
+                if (img.complete) {
+                    const ratio = img.width / img.height;
+                    layer.width = newHeight * ratio;
+                    document.getElementById('sizeWidth').value = Math.round(layer.width);
+                    drawCanvas();
+                    saveTempToCurrent();
+                } else {
+                    img.onload = () => {
+                        const ratio = img.width / img.height;
+                        layer.width = newHeight * ratio;
+                        document.getElementById('sizeWidth').value = Math.round(layer.width);
+                        drawCanvas();
+                        saveTempToCurrent();
+                    };
+                }
+            }
         }
     }
     
-    function updateTextColor(value) {
-        const layer = tempLayers.find(l => l.id === selectedLayerId);
+    function updateFontSizeFromInput() {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
         if (layer && layer.type === 'text') {
-            layer.color = value;
-            drawCanvas();
-            saveTempToCurrent();
-        }
-    }
-    
-    function updateImageFile(file) {
-        const layer = tempLayers.find(l => l.id === selectedLayerId);
-        if (layer && layer.type === 'image' && file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                layer.imageData = e.target.result;
-                updateLayerListUI();   // обновить название слоя
+            const newSize = parseInt(document.getElementById('fontSizeInput').value, 10);
+            if (!isNaN(newSize)) {
+                layer.fontSize = Math.min(200, Math.max(12, newSize));
                 drawCanvas();
                 saveTempToCurrent();
-            };
-            reader.readAsDataURL(file);
+            }
         }
     }
     
@@ -510,22 +759,22 @@
         container.innerHTML = '';
         tempLayers.forEach(layer => {
             const div = document.createElement('div');
-            div.className = `layer-item ${selectedLayerId === layer.id ? 'active' : ''}`;
+            let isMainSelected = selectedLayerIds[0] === layer.id;
+            let isMultiSelected = selectedLayerIds.includes(layer.id);
+            div.className = `layer-item ${isMainSelected ? 'selected-main' : (isMultiSelected ? 'selected-multi' : '')}`;
             div.onclick = (e) => {
                 if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
-                    selectedLayerId = layer.id;
-                    updateLayerListUI();
-                    const opacitySlider = document.getElementById('propOpacity');
-                    const colorPicker = document.getElementById('propColor');
-                    if (layer.type === 'text') {
-                        document.getElementById('propColorGroup').style.display = 'block';
-                        document.getElementById('propImageUploadGroup').style.display = 'none';
-                        colorPicker.value = layer.color;
+                    if (e.ctrlKey || e.metaKey) {
+                        if (selectedLayerIds.includes(layer.id)) {
+                            selectedLayerIds = selectedLayerIds.filter(id => id !== layer.id);
+                        } else {
+                            selectedLayerIds.push(layer.id);
+                        }
                     } else {
-                        document.getElementById('propColorGroup').style.display = 'none';
-                        document.getElementById('propImageUploadGroup').style.display = 'block';
+                        selectedLayerIds = [layer.id];
                     }
-                    opacitySlider.value = layer.opacity;
+                    updateLayerListUI();
+                    updatePropertiesPanel();
                     drawCanvas();
                 }
             };
@@ -555,7 +804,6 @@
                 deleteLayer(btn.dataset.id);
             });
         });
-        // Редактирование текста по двойному клику
         document.querySelectorAll('.layer-name').forEach(el => {
             el.addEventListener('dblclick', (e) => {
                 e.stopPropagation();
@@ -574,6 +822,72 @@
         });
     }
     
+    function updatePropertiesPanel() {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+        if (!layer) return;
+        
+        document.getElementById('propOpacity').value = layer.opacity;
+        if (layer.type === 'text') {
+            document.getElementById('propColorGroup').style.display = 'block';
+            document.getElementById('textBgGroup').style.display = 'block';
+            document.getElementById('propImageUploadGroup').style.display = 'none';
+            document.getElementById('propColor').value = layer.color;
+            // фон текста
+            document.getElementById('textBgColor').value = layer.bgColor || '#000000';
+            document.getElementById('textBgOpacity').value = layer.bgOpacity !== undefined ? layer.bgOpacity : 0.5;
+            document.getElementById('textBgRadius').value = layer.bgRadius !== undefined ? layer.bgRadius : 8;
+            document.getElementById('textBgPadX').value = layer.bgPadX !== undefined ? layer.bgPadX : 8;
+            document.getElementById('textBgPadY').value = layer.bgPadY !== undefined ? layer.bgPadY : 4;
+            // размеры
+            document.getElementById('propSizeGroup').style.display = 'block';
+            document.getElementById('sizeWidth').parentElement.style.display = 'flex';
+            document.getElementById('fontSizeRow').style.display = 'flex';
+            document.getElementById('sizeWidth').value = layer.fontSize;
+            document.getElementById('sizeHeight').disabled = true;
+            document.getElementById('fontSizeInput').value = layer.fontSize;
+            document.getElementById('lockAspectBtn').style.display = 'none';
+        } else {
+            document.getElementById('propColorGroup').style.display = 'none';
+            document.getElementById('textBgGroup').style.display = 'none';
+            document.getElementById('propImageUploadGroup').style.display = 'block';
+            document.getElementById('propSizeGroup').style.display = 'block';
+            document.getElementById('sizeWidth').parentElement.style.display = 'flex';
+            document.getElementById('fontSizeRow').style.display = 'none';
+            document.getElementById('sizeWidth').value = layer.width;
+            if (layer.imageData) {
+                const img = new Image();
+                img.src = layer.imageData;
+                if (img.complete) {
+                    const h = layer.width * (img.height / img.width);
+                    document.getElementById('sizeHeight').value = Math.round(h);
+                } else {
+                    img.onload = () => {
+                        const h = layer.width * (img.height / img.width);
+                        document.getElementById('sizeHeight').value = Math.round(h);
+                    };
+                }
+            } else {
+                document.getElementById('sizeHeight').value = layer.width;
+            }
+            document.getElementById('sizeHeight').disabled = !aspectLock;
+            document.getElementById('lockAspectBtn').style.display = 'inline-block';
+            document.getElementById('lockAspectBtn').textContent = aspectLock ? '🔒' : '🔓';
+        }
+    }
+    
+    function updateBgSettings() {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+        if (layer && layer.type === 'text') {
+            layer.bgColor = document.getElementById('textBgColor').value;
+            layer.bgOpacity = parseFloat(document.getElementById('textBgOpacity').value);
+            layer.bgRadius = parseInt(document.getElementById('textBgRadius').value, 10);
+            layer.bgPadX = parseInt(document.getElementById('textBgPadX').value, 10);
+            layer.bgPadY = parseInt(document.getElementById('textBgPadY').value, 10);
+            drawCanvas();
+            saveTempToCurrent();
+        }
+    }
+    
     function escapeHtml(str) {
         return str.replace(/[&<>]/g, function(m) {
             if (m === '&') return '&amp;';
@@ -583,7 +897,39 @@
         });
     }
     
-    // ---------- Отрисовка холста с сеткой и слоями ----------
+    function updateOpacity(value) {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+        if (layer) {
+            layer.opacity = parseFloat(value);
+            drawCanvas();
+            saveTempToCurrent();
+        }
+    }
+    
+    function updateTextColor(value) {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+        if (layer && layer.type === 'text') {
+            layer.color = value;
+            drawCanvas();
+            saveTempToCurrent();
+        }
+    }
+    
+    function updateImageFile(file) {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+        if (layer && layer.type === 'image' && file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                layer.imageData = e.target.result;
+                updateLayerListUI();
+                drawCanvas();
+                saveTempToCurrent();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    // ---------- Отрисовка холста ----------
     function resizeCanvas() {
         const target = getCurrentTemplateSize();
         const container = document.querySelector('.canvas-area');
@@ -608,7 +954,7 @@
         ctx.fillStyle = "#f8fafc";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         
-        // сетка с подписями
+        // сетка
         ctx.strokeStyle = "#cbd5e1";
         ctx.lineWidth = 0.5;
         ctx.font = "10px system-ui";
@@ -625,24 +971,42 @@
             ctx.fillText(y, 2, y*scale+10);
         }
         
-        // рисуем слои (от нижнего к верхнему)
+        // рисуем слои
         for (let layer of tempLayers) {
             if (!layer.visible) continue;
             if (layer.type === 'text') {
                 ctx.save();
                 ctx.globalAlpha = layer.opacity;
                 ctx.font = `${layer.fontSize}px system-ui, "Segoe UI"`;
+                const metrics = ctx.measureText(layer.text);
+                const textWidth = metrics.width;
+                const textHeight = layer.fontSize;
+                // фон текста
+                if (layer.bgOpacity > 0) {
+                    ctx.fillStyle = layer.bgColor;
+                    ctx.globalAlpha = layer.opacity * layer.bgOpacity;
+                    const radius = (layer.bgRadius || 8) * scale;
+                    const padX = (layer.bgPadX || 8) * scale;
+                    const padY = (layer.bgPadY || 4) * scale;
+                    const x = layer.x * scale - padX;
+                    const y = layer.y * scale - padY;
+                    const w = textWidth + padX*2;
+                    const h = textHeight + padY*2;
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, w, h, radius);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = layer.opacity;
                 ctx.fillStyle = layer.color;
                 ctx.shadowBlur = 3;
                 ctx.shadowColor = "rgba(0,0,0,0.4)";
                 ctx.fillText(layer.text, layer.x*scale, (layer.y + layer.fontSize*0.7)*scale);
                 ctx.shadowBlur = 0;
-                if (selectedLayerId === layer.id) {
-                    const metrics = ctx.measureText(layer.text);
+                if (selectedLayerIds.includes(layer.id)) {
                     ctx.strokeStyle = "#f97316";
                     ctx.lineWidth = 2;
-                    ctx.strokeRect(layer.x*scale, layer.y*scale, metrics.width, layer.fontSize);
-                    const handleX = (layer.x + metrics.width) * scale - 6;
+                    ctx.strokeRect(layer.x*scale, layer.y*scale, textWidth, layer.fontSize);
+                    const handleX = (layer.x + textWidth) * scale - 6;
                     const handleY = (layer.y + layer.fontSize) * scale - 6;
                     ctx.fillStyle = "#f97316";
                     ctx.fillRect(handleX, handleY, 10, 10);
@@ -659,7 +1023,7 @@
                         ctx.globalAlpha = layer.opacity;
                         ctx.drawImage(img, layer.x*scale, layer.y*scale, layer.width*scale, drawH*scale);
                         ctx.restore();
-                        if (selectedLayerId === layer.id) {
+                        if (selectedLayerIds.includes(layer.id)) {
                             ctx.strokeStyle = "#f97316";
                             ctx.lineWidth = 2;
                             ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, drawH*scale);
@@ -672,13 +1036,12 @@
                         img.onload = () => drawCanvas();
                     }
                 } else {
-                    // Заглушка для пустого изображения
                     ctx.fillStyle = "#cbd5e1";
                     ctx.fillRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
                     ctx.fillStyle = "#475569";
                     ctx.font = "12px system-ui";
                     ctx.fillText("🖼️", (layer.x+10)*scale, (layer.y+20)*scale);
-                    if (selectedLayerId === layer.id) {
+                    if (selectedLayerIds.includes(layer.id)) {
                         ctx.strokeStyle = "#f97316";
                         ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
                         const handleX = (layer.x + layer.width) * scale - 6;
@@ -691,7 +1054,25 @@
         }
     }
     
-    // ---------- Обработка мыши (перетаскивание и ресайз) ----------
+    // Helper для roundRect
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+            if (w < 2 * r) r = w / 2;
+            if (h < 2 * r) r = h / 2;
+            this.moveTo(x+r, y);
+            this.lineTo(x+w-r, y);
+            this.quadraticCurveTo(x+w, y, x+w, y+r);
+            this.lineTo(x+w, y+h-r);
+            this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+            this.lineTo(x+r, y+h);
+            this.quadraticCurveTo(x, y+h, x, y+h-r);
+            this.lineTo(x, y+r);
+            this.quadraticCurveTo(x, y, x+r, y);
+            return this;
+        };
+    }
+    
+    // ---------- Обработка мыши ----------
     function getLayerUnderMouse(mouseCanvasX, mouseCanvasY) {
         const realX = mouseCanvasX / scale;
         const realY = mouseCanvasY / scale;
@@ -722,7 +1103,7 @@
     }
     
     function isOnResizeHandle(mouseCanvasX, mouseCanvasY, layer) {
-        if (!layer || selectedLayerId !== layer.id) return false;
+        if (!layer || !selectedLayerIds.includes(layer.id)) return false;
         const realX = mouseCanvasX / scale;
         const realY = mouseCanvasY / scale;
         if (layer.type === 'text') {
@@ -756,23 +1137,23 @@
         const mouseX = (e.clientX - rect.left) * (editorCanvas.width / rect.width);
         const mouseY = (e.clientY - rect.top) * (editorCanvas.height / rect.height);
         
-        const selectedLayer = tempLayers.find(l => l.id === selectedLayerId);
-        if (selectedLayer && isOnResizeHandle(mouseX, mouseY, selectedLayer)) {
+        const targetLayer = tempLayers.find(l => selectedLayerIds.includes(l.id));
+        if (targetLayer && isOnResizeHandle(mouseX, mouseY, targetLayer)) {
             isResizing = true;
             const realX = mouseX / scale;
             const realY = mouseY / scale;
-            if (selectedLayer.type === 'text') {
-                ctx.font = `${selectedLayer.fontSize}px system-ui`;
-                const metrics = ctx.measureText(selectedLayer.text);
-                resizeStart = { x: realX, y: realY, width: metrics.width, height: selectedLayer.fontSize, fontSize: selectedLayer.fontSize };
+            if (targetLayer.type === 'text') {
+                ctx.font = `${targetLayer.fontSize}px system-ui`;
+                const metrics = ctx.measureText(targetLayer.text);
+                resizeStart = { x: realX, y: realY, width: metrics.width, height: targetLayer.fontSize, fontSize: targetLayer.fontSize };
             } else {
-                let h = selectedLayer.width;
-                if (selectedLayer.imageData) {
+                let h = targetLayer.width;
+                if (targetLayer.imageData) {
                     const img = new Image();
-                    img.src = selectedLayer.imageData;
-                    if (img.complete) h = selectedLayer.width * (img.height / img.width);
+                    img.src = targetLayer.imageData;
+                    if (img.complete) h = targetLayer.width * (img.height / img.width);
                 }
-                resizeStart = { x: realX, y: realY, width: selectedLayer.width, height: h, fontSize: null };
+                resizeStart = { x: realX, y: realY, width: targetLayer.width, height: h, fontSize: null };
             }
             e.preventDefault();
             return;
@@ -780,13 +1161,22 @@
         
         const layer = getLayerUnderMouse(mouseX, mouseY);
         if (layer) {
+            if (!e.ctrlKey && !e.metaKey) {
+                selectedLayerIds = [layer.id];
+            } else {
+                if (selectedLayerIds.includes(layer.id)) {
+                    selectedLayerIds = selectedLayerIds.filter(id => id !== layer.id);
+                } else {
+                    selectedLayerIds.push(layer.id);
+                }
+            }
             dragTarget = layer;
             const realX = mouseX / scale;
             const realY = mouseY / scale;
             dragOffset.x = realX - layer.x;
             dragOffset.y = realY - layer.y;
-            selectedLayerId = layer.id;
             updateLayerListUI();
+            updatePropertiesPanel();
             drawCanvas();
             e.preventDefault();
         }
@@ -797,8 +1187,8 @@
         const mouseX = (e.clientX - rect.left) * (editorCanvas.width / rect.width);
         const mouseY = (e.clientY - rect.top) * (editorCanvas.height / rect.height);
         
-        if (isResizing && selectedLayerId) {
-            const layer = tempLayers.find(l => l.id === selectedLayerId);
+        if (isResizing && selectedLayerIds.length > 0) {
+            const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
             if (!layer) return;
             const realX = mouseX / scale;
             const realY = mouseY / scale;
@@ -858,24 +1248,9 @@
     // ---------- Работа с временными слоями ----------
     function loadTempFromCurrent() {
         tempLayers = JSON.parse(JSON.stringify(getCurrentLayers()));
-        if (tempLayers.length && !selectedLayerId) selectedLayerId = tempLayers[0].id;
+        if (tempLayers.length && selectedLayerIds.length === 0) selectedLayerIds = [tempLayers[0].id];
         updateLayerListUI();
-        const opacitySlider = document.getElementById('propOpacity');
-        const colorPicker = document.getElementById('propColor');
-        if (selectedLayerId) {
-            const layer = tempLayers.find(l => l.id === selectedLayerId);
-            if (layer) {
-                opacitySlider.value = layer.opacity;
-                if (layer.type === 'text') {
-                    document.getElementById('propColorGroup').style.display = 'block';
-                    document.getElementById('propImageUploadGroup').style.display = 'none';
-                    colorPicker.value = layer.color;
-                } else {
-                    document.getElementById('propColorGroup').style.display = 'none';
-                    document.getElementById('propImageUploadGroup').style.display = 'block';
-                }
-            }
-        }
+        updatePropertiesPanel();
         resizeCanvas();
         drawCanvas();
     }
@@ -884,13 +1259,33 @@
         setCurrentLayers(JSON.parse(JSON.stringify(tempLayers)));
     }
     
-    // ---------- Наложение на реальные фото ----------
+    // ---------- Наложение на фото ----------
     async function renderLayerOnPhoto(ctxPhoto, layer, scaleX, scaleY) {
         return new Promise((resolve) => {
             if (!layer.visible) return resolve();
             if (layer.type === 'text') {
                 const fontSizePx = layer.fontSize * scaleY;
                 ctxPhoto.font = `${fontSizePx}px system-ui, "Segoe UI"`;
+                const metrics = ctxPhoto.measureText(layer.text);
+                const textWidth = metrics.width;
+                const textHeight = fontSizePx;
+                // фон текста на фото
+                if (layer.bgOpacity && layer.bgOpacity > 0) {
+                    ctxPhoto.save();
+                    ctxPhoto.globalAlpha = layer.opacity * layer.bgOpacity;
+                    ctxPhoto.fillStyle = layer.bgColor;
+                    const padX = (layer.bgPadX || 8) * scaleX;
+                    const padY = (layer.bgPadY || 4) * scaleY;
+                    const radius = (layer.bgRadius || 8) * Math.min(scaleX, scaleY);
+                    const x = layer.x * scaleX - padX;
+                    const y = layer.y * scaleY - padY;
+                    const w = textWidth + padX*2;
+                    const h = textHeight + padY*2;
+                    ctxPhoto.beginPath();
+                    ctxPhoto.roundRect(x, y, w, h, radius);
+                    ctxPhoto.fill();
+                    ctxPhoto.restore();
+                }
                 ctxPhoto.fillStyle = layer.color;
                 ctxPhoto.shadowBlur = 4;
                 ctxPhoto.shadowColor = "rgba(0,0,0,0.5)";
@@ -1018,18 +1413,23 @@
         document.getElementById('downloadZipBtn').addEventListener('click', downloadAllZip);
         
         const modal = document.getElementById('constructorModal');
+        let beforeEditLayers = null;
+        
         document.getElementById('openConstructorBtn').onclick = () => {
+            beforeEditLayers = JSON.parse(JSON.stringify(getCurrentLayers()));
             loadTempFromCurrent();
             modal.style.display = 'flex';
             setTimeout(resizeCanvas, 100);
         };
         document.getElementById('cancelConstructorBtn').onclick = () => {
+            if (beforeEditLayers) {
+                setCurrentLayers(beforeEditLayers);
+                loadTempFromCurrent();
+            }
             modal.style.display = 'none';
         };
         document.getElementById('applyConstructorBtn').onclick = () => {
-            saveTempToCurrent();
             modal.style.display = 'none';
-            renderAllPreviews();
         };
         
         document.querySelectorAll('.orientation-btn').forEach(btn => {
@@ -1038,6 +1438,7 @@
                 btn.classList.add('active');
                 activeOrientation = btn.dataset.orient;
                 loadTempFromCurrent();
+                beforeEditLayers = JSON.parse(JSON.stringify(getCurrentLayers()));
             });
         });
         
@@ -1052,6 +1453,47 @@
         imageUpload.addEventListener('change', (e) => {
             if (e.target.files.length) updateImageFile(e.target.files[0]);
             e.target.value = '';
+        });
+        
+        // Фон текста
+        const bgColor = document.getElementById('textBgColor');
+        const bgOpacity = document.getElementById('textBgOpacity');
+        const bgRadius = document.getElementById('textBgRadius');
+        const bgPadX = document.getElementById('textBgPadX');
+        const bgPadY = document.getElementById('textBgPadY');
+        [bgColor, bgOpacity, bgRadius, bgPadX, bgPadY].forEach(el => {
+            el.addEventListener('input', updateBgSettings);
+        });
+        
+        const sizeWidth = document.getElementById('sizeWidth');
+        const sizeHeight = document.getElementById('sizeHeight');
+        sizeWidth.addEventListener('change', updateSizeFromInputs);
+        sizeHeight.addEventListener('change', updateHeightFromInput);
+        const fontSizeInput = document.getElementById('fontSizeInput');
+        fontSizeInput.addEventListener('change', updateFontSizeFromInput);
+        
+        const lockBtn = document.getElementById('lockAspectBtn');
+        lockBtn.addEventListener('click', () => {
+            aspectLock = !aspectLock;
+            lockBtn.textContent = aspectLock ? '🔒' : '🔓';
+            const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+            if (layer && layer.type === 'image') {
+                document.getElementById('sizeHeight').disabled = !aspectLock;
+                if (aspectLock && layer.imageData) {
+                    const img = new Image();
+                    img.src = layer.imageData;
+                    if (img.complete) {
+                        const h = layer.width * (img.height / img.width);
+                        document.getElementById('sizeHeight').value = Math.round(h);
+                    }
+                }
+            }
+        });
+        
+        document.querySelectorAll('.align-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                alignLayers(btn.dataset.align);
+            });
         });
         
         editorCanvas.addEventListener('mousedown', onMouseDown);
