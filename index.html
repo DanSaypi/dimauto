@@ -2,47 +2,59 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Наложение логотипа и текстов | СТО</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Конструктор наложений для СТО</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
             background: #f1f5f9;
             margin: 0;
             padding: 20px;
         }
-        .container {
+        .main-container {
             max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 32px;
-            padding: 24px;
             box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+            padding: 24px 28px;
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
         button {
             background: #3b82f6;
             border: none;
-            padding: 8px 18px;
+            padding: 8px 20px;
             border-radius: 40px;
             color: white;
             font-weight: 500;
             cursor: pointer;
             transition: 0.2s;
+            font-size: 0.9rem;
         }
-        button:hover { background: #2563eb; transform: translateY(-1px); }
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
         .btn-outline {
             background: white;
             color: #1e293b;
             border: 1px solid #cbd5e1;
+        }
+        .btn-danger {
+            background: #ef4444;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
         }
         .upload-area {
             background: #fefce8;
@@ -52,7 +64,7 @@
             text-align: center;
             margin: 20px 0;
         }
-        .previews {
+        .previews-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 24px;
@@ -75,42 +87,143 @@
             text-align: center;
         }
         .btn-small {
-            padding: 6px 12px;
-            font-size: 0.8rem;
+            padding: 6px 14px;
+            font-size: 0.75rem;
         }
-        .download-all {
+        .download-all-btn {
             background: #8b5cf6;
             width: 100%;
             padding: 14px;
             font-size: 1rem;
             margin-top: 16px;
         }
+        /* Модальное окно конструктора */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             z-index: 10000;
             justify-content: center;
             align-items: center;
         }
         .modal-content {
-            background: white;
+            background: #fff;
             border-radius: 32px;
             max-width: 95vw;
             max-height: 90vh;
-            overflow: auto;
+            width: 1300px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .modal-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
             padding: 20px;
-            width: 1000px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .layers-sidebar {
+            width: 280px;
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+        .canvas-area {
+            flex: 1;
+            background: #eef2ff;
+            border-radius: 24px;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
         }
         canvas {
-            background: #fff;
-            border-radius: 16px;
+            background: white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             cursor: crosshair;
+            border-radius: 16px;
             max-width: 100%;
             height: auto;
+        }
+        .layer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .layer-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .layer-item.active {
+            border: 2px solid #3b82f6;
+            background: #eff6ff;
+        }
+        .layer-icon {
+            font-size: 20px;
+            width: 32px;
+            text-align: center;
+        }
+        .layer-name {
+            flex: 1;
+            font-size: 0.85rem;
+            font-weight: 500;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .layer-actions-buttons {
+            display: flex;
+            gap: 4px;
+        }
+        .layer-actions-buttons button {
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+        .prop-group {
+            margin-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 12px;
+        }
+        .prop-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: block;
+            margin: 6px 0 2px;
+        }
+        input, select {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 14px;
+            border: 1px solid #cbd5e1;
         }
         .flex-between {
             display: flex;
@@ -120,138 +233,370 @@
         .orientation-switch {
             display: flex;
             gap: 8px;
-            margin: 10px 0;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 60px;
         }
         .orientation-btn {
-            background: #e2e8f0;
+            background: transparent;
             color: #1e293b;
+            box-shadow: none;
+            padding: 4px 16px;
+            font-size: 0.8rem;
         }
         .orientation-btn.active {
             background: #3b82f6;
             color: white;
         }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
     </style>
 </head>
 <body>
-<div class="container">
+<div class="main-container">
     <div class="header">
-        <h2>🖼️ Наложение логотипа и текста на фото</h2>
-        <button id="openEditorBtn">✏️ Редактор слоёв</button>
+        <h2>🖼️ Наложение элементов на фото</h2>
+        <button id="openConstructorBtn">🎨 Открыть конструктор слоёв</button>
     </div>
 
     <div class="upload-area">
-        <p>📸 Загрузите фото (можно несколько)</p>
+        <p>📸 Загрузите фотографии (можно несколько)</p>
         <input type="file" id="photoInput" multiple accept="image/jpeg,image/png,image/webp">
-        <button id="clearBtn" class="btn-outline">Очистить всё</button>
+        <button id="clearPhotosBtn" class="btn-outline">Очистить все фото</button>
     </div>
 
-    <div id="previews" class="previews"></div>
-    <button id="downloadZipBtn" class="download-all">📦 Скачать все как ZIP</button>
+    <div id="previewsContainer" class="previews-grid"></div>
+    <button id="downloadZipBtn" class="download-all-btn">📦 Скачать всё ZIP-архивом</button>
 </div>
 
-<!-- Модалка редактора -->
-<div id="editorModal" class="modal">
+<!-- Модальное окно конструктора -->
+<div id="constructorModal" class="modal">
     <div class="modal-content">
-        <div class="flex-between">
-            <h3>🎨 Редактор расположения элементов</h3>
+        <div class="modal-header">
+            <h3>🎨 Конструктор слоёв</h3>
             <div class="orientation-switch">
                 <button data-orient="portrait" class="orientation-btn active">📱 Вертикальное (2250x3000)</button>
                 <button data-orient="landscape" class="orientation-btn">🖥️ Горизонтальное (3000x2250)</button>
             </div>
         </div>
-        <div style="text-align: center; margin: 16px 0;">
-            <canvas id="editorCanvas" width="800" height="1066" style="max-width:100%; height:auto; border:1px solid #ccc;"></canvas>
+        <div class="modal-body">
+            <div class="layers-sidebar">
+                <div class="flex-between">
+                    <strong>Слои (порядок сверху вниз)</strong>
+                    <div>
+                        <button id="addTextLayerBtn" class="btn-outline" style="padding:4px 10px; font-size:0.7rem;">+ Текст</button>
+                        <button id="addImageLayerBtn" class="btn-outline" style="padding:4px 10px; font-size:0.7rem;">+ Изобр.</button>
+                    </div>
+                </div>
+                <div id="layerList" class="layer-list"></div>
+                <div id="layerProperties" style="margin-top: 8px;">
+                    <div class="prop-group">
+                        <label>👁️ Видимость</label>
+                        <input type="checkbox" id="propVisible">
+                    </div>
+                    <div class="prop-group" id="propTextGroup">
+                        <label>📝 Текст</label>
+                        <input type="text" id="propText" placeholder="Текст">
+                    </div>
+                    <div class="prop-group" id="propImageGroup">
+                        <label>🖼️ Загрузить картинку</label>
+                        <input type="file" id="propImageUpload" accept="image/png,image/jpeg,image/webp">
+                    </div>
+                    <div class="prop-group">
+                        <label>📏 Размер (шрифт / ширина картинки)</label>
+                        <input type="range" id="propSize" min="10" max="400" step="2" value="40">
+                        <span id="sizeValue">40</span>
+                    </div>
+                    <div class="prop-group" id="propColorGroup">
+                        <label>🎨 Цвет текста</label>
+                        <input type="color" id="propColor" value="#ffffff">
+                    </div>
+                    <div class="prop-group">
+                        <label>🌀 Прозрачность (0-1)</label>
+                        <input type="range" id="propOpacity" min="0" max="1" step="0.01" value="1">
+                    </div>
+                    <button id="deleteLayerBtn" class="btn-danger" style="width:100%; margin-top:16px;">🗑 Удалить слой</button>
+                </div>
+            </div>
+            <div class="canvas-area">
+                <canvas id="editorCanvas" width="800" height="1066"></canvas>
+            </div>
         </div>
-        <div style="display: flex; gap: 12px; justify-content: flex-end;">
-            <button id="cancelEditor" class="btn-outline">Отмена</button>
-            <button id="saveEditor">✅ Применить и закрыть</button>
+        <div class="modal-footer">
+            <button id="cancelConstructorBtn" class="btn-outline">Отмена</button>
+            <button id="applyConstructorBtn">✅ Применить и закрыть</button>
         </div>
     </div>
 </div>
 
 <script>
-    // ---------- НАСТРОЙКИ ----------
-    let portraitElements = {
-        logo: { type: 'image', x: 1800, y: 2600, width: 140, opacity: 1, dataUrl: null },
-        texts: [
-            { text: 'ДИАГНОСТИКА', fontSize: 48, color: '#ffffff', x: 120, y: 280, opacity: 1, visible: true },
-            { text: 'ГАРАНТИЯ', fontSize: 48, color: '#ffffff', x: 120, y: 380, opacity: 1, visible: true },
-            { text: 'БЫСТРЫЙ РЕМОНТ', fontSize: 48, color: '#ffffff', x: 120, y: 480, opacity: 1, visible: true }
-        ]
-    };
-    let landscapeElements = JSON.parse(JSON.stringify(portraitElements));
-    // сдвинем для горизонтали
-    landscapeElements.logo = { ...portraitElements.logo, x: 2500, y: 1800 };
-    landscapeElements.texts.forEach(t => { t.x = 200; t.y += 100; });
-
-    let activeOrientation = 'portrait';
+    // ------------------- ГЛОБАЛЬНЫЕ НАСТРОЙКИ -------------------
+    let portraitLayers = [];    // слои для вертикального шаблона
+    let landscapeLayers = [];   // для горизонтального
+    let activeOrientation = "portrait";
+    let selectedLayerId = null;
+    let dragTarget = null;
+    let dragOffset = { x: 0, y: 0 };
+    
+    // Данные для конструктора (копия)
+    let tempLayers = [];
+    
+    // Размеры шаблонов
+    const portraitSize = { w: 2250, h: 3000 };
+    const landscapeSize = { w: 3000, h: 2250 };
+    
+    // Основные файлы фото
     let uploadedFiles = [];
-    let currentLogoDataUrl = null;
     let isProcessing = false;
-
-    // DOM
-    const photoInput = document.getElementById('photoInput');
-    const clearBtn = document.getElementById('clearBtn');
-    const previewsDiv = document.getElementById('previews');
-    const downloadZipBtn = document.getElementById('downloadZipBtn');
-    const openEditorBtn = document.getElementById('openEditorBtn');
-    const editorModal = document.getElementById('editorModal');
-    const cancelEditor = document.getElementById('cancelEditor');
-    const saveEditor = document.getElementById('saveEditor');
+    let renderCounter = 0;
+    
+    // DOM элементы
     const editorCanvas = document.getElementById('editorCanvas');
-    const orientationBtns = document.querySelectorAll('.orientation-btn');
-
     let ctx = editorCanvas.getContext('2d');
     let canvasWidth = 0, canvasHeight = 0, scale = 1;
-    let dragTarget = null; // 'logo' или index текста
-    let dragOffset = { x: 0, y: 0 };
-    let tempElements = null; // копия для редактора
-
-    // ---------- Сохранение / загрузка localStorage ----------
-    function saveSettings() {
-        const data = { portraitElements, landscapeElements, currentLogoDataUrl };
-        localStorage.setItem('sto_settings', JSON.stringify(data));
+    
+    // ---------- Вспомогательные функции ----------
+    function getCurrentTemplateSize() {
+        return activeOrientation === 'portrait' ? portraitSize : landscapeSize;
     }
-
-    function loadSettings() {
-        const saved = localStorage.getItem('sto_settings');
+    
+    function getCurrentLayers() {
+        return activeOrientation === 'portrait' ? portraitLayers : landscapeLayers;
+    }
+    
+    function setCurrentLayers(layers) {
+        if (activeOrientation === 'portrait') portraitLayers = layers;
+        else landscapeLayers = layers;
+        saveAllSettings();
+    }
+    
+    function generateId(prefix) {
+        return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    }
+    
+    // Сохранение / загрузка в localStorage
+    function saveAllSettings() {
+        const data = {
+            portraitLayers,
+            landscapeLayers,
+            version: 3
+        };
+        localStorage.setItem('sto_constructor_v3', JSON.stringify(data));
+    }
+    
+    function loadAllSettings() {
+        const saved = localStorage.getItem('sto_constructor_v3');
         if (saved) {
             try {
                 const data = JSON.parse(saved);
-                portraitElements = data.portraitElements || portraitElements;
-                landscapeElements = data.landscapeElements || landscapeElements;
-                currentLogoDataUrl = data.currentLogoDataUrl || null;
+                if (data.portraitLayers) portraitLayers = data.portraitLayers;
+                if (data.landscapeLayers) landscapeLayers = data.landscapeLayers;
             } catch(e) {}
         }
-        // если нет логотипа, попробуем из старого ключа
-        if (!currentLogoDataUrl) {
-            const oldLogo = localStorage.getItem('sto_logo_base64');
-            if (oldLogo) currentLogoDataUrl = oldLogo;
+        // Если нет слоёв, создаём демо
+        if (!portraitLayers || portraitLayers.length === 0) {
+            portraitLayers = [
+                { id: generateId('text'), type: 'text', text: 'ДИАГНОСТИКА', fontSize: 48, color: '#ffffff', x: 120, y: 280, opacity: 1, visible: true },
+                { id: generateId('text'), type: 'text', text: 'ГАРАНТИЯ', fontSize: 48, color: '#ffffff', x: 120, y: 380, opacity: 1, visible: true },
+                { id: generateId('text'), type: 'text', text: 'БЫСТРЫЙ РЕМОНТ', fontSize: 48, color: '#ffffff', x: 120, y: 480, opacity: 1, visible: true }
+            ];
         }
-        // синхронизируем лого в объектах
-        [portraitElements, landscapeElements].forEach(e => {
-            if (e.logo) e.logo.dataUrl = currentLogoDataUrl;
+        if (!landscapeLayers || landscapeLayers.length === 0) {
+            landscapeLayers = JSON.parse(JSON.stringify(portraitLayers));
+            landscapeLayers.forEach(l => { l.x = 200; l.y = 200; });
+        }
+        // Убедимся, что у каждого слоя есть id
+        [portraitLayers, landscapeLayers].forEach(layers => {
+            layers.forEach(layer => {
+                if (!layer.id) layer.id = generateId(layer.type);
+            });
         });
-        saveSettings(); // обновим формат
+        saveAllSettings();
     }
-
-    // обновление лого во всех ориентациях
-    function setLogoDataUrl(dataUrl) {
-        currentLogoDataUrl = dataUrl;
-        portraitElements.logo.dataUrl = dataUrl;
-        landscapeElements.logo.dataUrl = dataUrl;
-        saveSettings();
+    
+    // Добавление слоёв
+    function addTextLayer() {
+        const newLayer = {
+            id: generateId('text'),
+            type: 'text',
+            text: 'Новый текст',
+            fontSize: 40,
+            color: '#ffffff',
+            x: 200,
+            y: 200,
+            opacity: 1,
+            visible: true
+        };
+        tempLayers.push(newLayer);
+        selectedLayerId = newLayer.id;
+        updateLayerListUI();
+        updatePropertiesPanel();
+        drawCanvas();
+        saveTempToCurrent();
     }
-
-    // ---------- Отрисовка в редакторе ----------
-    function getCurrentTemplateSize() {
-        return activeOrientation === 'portrait' ? { w: 2250, h: 3000 } : { w: 3000, h: 2250 };
+    
+    function addImageLayer() {
+        const newLayer = {
+            id: generateId('img'),
+            type: 'image',
+            imageData: null,
+            width: 120,
+            x: 200,
+            y: 200,
+            opacity: 1,
+            visible: true
+        };
+        tempLayers.push(newLayer);
+        selectedLayerId = newLayer.id;
+        updateLayerListUI();
+        updatePropertiesPanel();
+        drawCanvas();
+        saveTempToCurrent();
+        // Предложить сразу загрузить картинку
+        setTimeout(() => {
+            if (selectedLayerId === newLayer.id) {
+                document.getElementById('propImageUpload').click();
+            }
+        }, 100);
     }
-
+    
+    function deleteSelectedLayer() {
+        if (!selectedLayerId) return;
+        tempLayers = tempLayers.filter(l => l.id !== selectedLayerId);
+        if (tempLayers.length > 0) selectedLayerId = tempLayers[0].id;
+        else selectedLayerId = null;
+        updateLayerListUI();
+        updatePropertiesPanel();
+        drawCanvas();
+        saveTempToCurrent();
+    }
+    
+    function moveLayerUp(layerId) {
+        const index = tempLayers.findIndex(l => l.id === layerId);
+        if (index > 0) {
+            [tempLayers[index-1], tempLayers[index]] = [tempLayers[index], tempLayers[index-1]];
+            updateLayerListUI();
+            drawCanvas();
+            saveTempToCurrent();
+        }
+    }
+    
+    function moveLayerDown(layerId) {
+        const index = tempLayers.findIndex(l => l.id === layerId);
+        if (index < tempLayers.length-1 && index !== -1) {
+            [tempLayers[index+1], tempLayers[index]] = [tempLayers[index], tempLayers[index+1]];
+            updateLayerListUI();
+            drawCanvas();
+            saveTempToCurrent();
+        }
+    }
+    
+    // UI списка слоёв
+    function updateLayerListUI() {
+        const container = document.getElementById('layerList');
+        container.innerHTML = '';
+        tempLayers.forEach(layer => {
+            const div = document.createElement('div');
+            div.className = `layer-item ${selectedLayerId === layer.id ? 'active' : ''}`;
+            div.onclick = () => {
+                selectedLayerId = layer.id;
+                updateLayerListUI();
+                updatePropertiesPanel();
+                drawCanvas();
+            };
+            const icon = layer.type === 'text' ? '📝' : '🖼️';
+            const name = layer.type === 'text' ? (layer.text.substring(0,15) || 'текст') : 'Изображение';
+            div.innerHTML = `
+                <div class="layer-icon">${icon}</div>
+                <div class="layer-name">${name} ${!layer.visible ? '🙈' : ''}</div>
+                <div class="layer-actions-buttons">
+                    <button class="move-up" data-id="${layer.id}" title="Выше">↑</button>
+                    <button class="move-down" data-id="${layer.id}" title="Ниже">↓</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        // вешаем события
+        document.querySelectorAll('.move-up').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                moveLayerUp(btn.dataset.id);
+            });
+        });
+        document.querySelectorAll('.move-down').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                moveLayerDown(btn.dataset.id);
+            });
+        });
+    }
+    
+    function updatePropertiesPanel() {
+        const layer = tempLayers.find(l => l.id === selectedLayerId);
+        if (!layer) {
+            document.getElementById('propVisible').disabled = true;
+            return;
+        }
+        document.getElementById('propVisible').disabled = false;
+        document.getElementById('propVisible').checked = layer.visible;
+        document.getElementById('propOpacity').value = layer.opacity;
+        if (layer.type === 'text') {
+            document.getElementById('propTextGroup').style.display = 'block';
+            document.getElementById('propImageGroup').style.display = 'none';
+            document.getElementById('propColorGroup').style.display = 'block';
+            document.getElementById('propText').value = layer.text;
+            document.getElementById('propSize').value = layer.fontSize;
+            document.getElementById('sizeValue').innerText = layer.fontSize;
+            document.getElementById('propColor').value = layer.color;
+        } else {
+            document.getElementById('propTextGroup').style.display = 'none';
+            document.getElementById('propImageGroup').style.display = 'block';
+            document.getElementById('propColorGroup').style.display = 'none';
+            document.getElementById('propSize').value = layer.width;
+            document.getElementById('sizeValue').innerText = layer.width;
+        }
+    }
+    
+    function applyPropertyChanges() {
+        const layer = tempLayers.find(l => l.id === selectedLayerId);
+        if (!layer) return;
+        layer.visible = document.getElementById('propVisible').checked;
+        layer.opacity = parseFloat(document.getElementById('propOpacity').value);
+        if (layer.type === 'text') {
+            layer.text = document.getElementById('propText').value;
+            layer.fontSize = parseInt(document.getElementById('propSize').value, 10);
+            layer.color = document.getElementById('propColor').value;
+            document.getElementById('sizeValue').innerText = layer.fontSize;
+        } else {
+            layer.width = parseInt(document.getElementById('propSize').value, 10);
+            document.getElementById('sizeValue').innerText = layer.width;
+            const fileInput = document.getElementById('propImageUpload');
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    layer.imageData = e.target.result;
+                    drawCanvas();
+                    saveTempToCurrent();
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+                fileInput.value = '';
+            }
+        }
+        drawCanvas();
+        updateLayerListUI();
+        saveTempToCurrent();
+    }
+    
+    // ---------- Отрисовка холста конструктора ----------
     function resizeCanvas() {
         const target = getCurrentTemplateSize();
         const maxW = editorCanvas.parentElement.clientWidth - 40;
-        const maxH = window.innerHeight * 0.5;
+        const maxH = window.innerHeight * 0.55;
         const ratio = target.w / target.h;
         let drawW = Math.min(maxW, 800);
         let drawH = drawW / ratio;
@@ -261,14 +606,14 @@
         canvasWidth = drawW;
         canvasHeight = drawH;
         scale = drawW / target.w;
-        drawEditor();
+        drawCanvas();
     }
-
-    function drawEditor() {
+    
+    function drawCanvas() {
         if (!ctx) return;
         const target = getCurrentTemplateSize();
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        ctx.fillStyle = "#f1f5f9";
+        ctx.fillStyle = "#f8fafc";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         // сетка
         ctx.strokeStyle = "#cbd5e1";
@@ -278,158 +623,193 @@
             ctx.moveTo(i*scale, 0); ctx.lineTo(i*scale, canvasHeight); ctx.stroke();
             ctx.moveTo(0, i*scale); ctx.lineTo(canvasWidth, i*scale); ctx.stroke();
         }
-
-        const elements = tempElements;
-        // рисуем текст
-        for (let i = 0; i < elements.texts.length; i++) {
-            const t = elements.texts[i];
-            if (!t.visible) continue;
-            ctx.save();
-            ctx.globalAlpha = t.opacity;
-            ctx.font = `${t.fontSize}px system-ui, "Segoe UI"`;
-            ctx.fillStyle = t.color;
-            ctx.shadowBlur = 3;
-            ctx.shadowColor = "rgba(0,0,0,0.4)";
-            ctx.fillText(t.text, t.x*scale, (t.y + t.fontSize*0.7)*scale);
-            ctx.shadowBlur = 0;
-            if (dragTarget === i) {
-                const metrics = ctx.measureText(t.text);
-                ctx.strokeStyle = "#f97316";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(t.x*scale, t.y*scale, metrics.width, t.fontSize);
-            }
-            ctx.restore();
-        }
-        // рисуем логотип
-        if (elements.logo && elements.logo.dataUrl) {
-            const logo = elements.logo;
-            const img = new Image();
-            img.src = logo.dataUrl;
-            if (img.complete) {
-                const ratio = img.height / img.width;
-                const drawH = logo.width * ratio;
+        // рисуем все слои в порядке от нижнего к верхнему
+        for (let layer of tempLayers) {
+            if (!layer.visible) continue;
+            if (layer.type === 'text') {
                 ctx.save();
-                ctx.globalAlpha = logo.opacity;
-                ctx.drawImage(img, logo.x*scale, logo.y*scale, logo.width*scale, drawH*scale);
-                ctx.restore();
-                if (dragTarget === 'logo') {
+                ctx.globalAlpha = layer.opacity;
+                ctx.font = `${layer.fontSize}px system-ui, "Segoe UI"`;
+                ctx.fillStyle = layer.color;
+                ctx.shadowBlur = 3;
+                ctx.shadowColor = "rgba(0,0,0,0.4)";
+                ctx.fillText(layer.text, layer.x*scale, (layer.y + layer.fontSize*0.7)*scale);
+                ctx.shadowBlur = 0;
+                if (selectedLayerId === layer.id) {
+                    const metrics = ctx.measureText(layer.text);
                     ctx.strokeStyle = "#f97316";
                     ctx.lineWidth = 2;
-                    ctx.strokeRect(logo.x*scale, logo.y*scale, logo.width*scale, drawH*scale);
+                    ctx.strokeRect(layer.x*scale, layer.y*scale, metrics.width, layer.fontSize);
                 }
-            } else {
-                img.onload = () => drawEditor();
-            }
-        } else if (elements.logo) {
-            ctx.fillStyle = "#cbd5e1";
-            ctx.fillRect(elements.logo.x*scale, elements.logo.y*scale, elements.logo.width*scale, elements.logo.width*scale);
-            ctx.fillStyle = "#475569";
-            ctx.font = "14px system-ui";
-            ctx.fillText("Логотип", (elements.logo.x+10)*scale, (elements.logo.y+25)*scale);
-            if (dragTarget === 'logo') {
-                ctx.strokeStyle = "#f97316";
-                ctx.strokeRect(elements.logo.x*scale, elements.logo.y*scale, elements.logo.width*scale, elements.logo.width*scale);
+                ctx.restore();
+            } else if (layer.type === 'image') {
+                if (layer.imageData) {
+                    const img = new Image();
+                    img.src = layer.imageData;
+                    if (img.complete) {
+                        const ratio = img.height / img.width;
+                        const drawH = layer.width * ratio;
+                        ctx.save();
+                        ctx.globalAlpha = layer.opacity;
+                        ctx.drawImage(img, layer.x*scale, layer.y*scale, layer.width*scale, drawH*scale);
+                        ctx.restore();
+                        if (selectedLayerId === layer.id) {
+                            ctx.strokeStyle = "#f97316";
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, drawH*scale);
+                        }
+                    } else {
+                        img.onload = () => drawCanvas();
+                    }
+                } else {
+                    ctx.fillStyle = "#cbd5e1";
+                    ctx.fillRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
+                    ctx.fillStyle = "#475569";
+                    ctx.font = "12px system-ui";
+                    ctx.fillText("🖼️", (layer.x+10)*scale, (layer.y+20)*scale);
+                    if (selectedLayerId === layer.id) {
+                        ctx.strokeStyle = "#f97316";
+                        ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
+                    }
+                }
             }
         }
     }
-
-    // ---------- Перетаскивание в редакторе ----------
-    function getElementUnderMouse(mouseCanvasX, mouseCanvasY) {
+    
+    // ---------- Перетаскивание мышью ----------
+    function getLayerUnderMouse(mouseCanvasX, mouseCanvasY) {
         const realX = mouseCanvasX / scale;
         const realY = mouseCanvasY / scale;
-        const elements = tempElements;
-        // сначала тексты (сверху вниз по списку, последний выше)
-        for (let i = elements.texts.length-1; i >= 0; i--) {
-            const t = elements.texts[i];
-            if (!t.visible) continue;
-            ctx.font = `${t.fontSize}px system-ui`;
-            const metrics = ctx.measureText(t.text);
-            const w = metrics.width;
-            const h = t.fontSize;
-            if (realX >= t.x && realX <= t.x + w && realY >= t.y && realY <= t.y + h) {
-                return { type: 'text', index: i };
-            }
-        }
-        // логотип
-        if (elements.logo) {
-            const logo = elements.logo;
-            let height = logo.width;
-            if (logo.dataUrl) {
-                const img = new Image();
-                img.src = logo.dataUrl;
-                if (img.complete) height = logo.width * (img.height / img.width);
-            }
-            if (realX >= logo.x && realX <= logo.x + logo.width && realY >= logo.y && realY <= logo.y + height) {
-                return { type: 'logo' };
+        // идём с последнего (верхний слой)
+        for (let i = tempLayers.length-1; i >= 0; i--) {
+            const layer = tempLayers[i];
+            if (!layer.visible) continue;
+            if (layer.type === 'text') {
+                ctx.font = `${layer.fontSize}px system-ui`;
+                const metrics = ctx.measureText(layer.text);
+                const w = metrics.width;
+                const h = layer.fontSize;
+                if (realX >= layer.x && realX <= layer.x + w && realY >= layer.y && realY <= layer.y + h) {
+                    return layer;
+                }
+            } else if (layer.type === 'image') {
+                let h = layer.width;
+                if (layer.imageData) {
+                    const img = new Image();
+                    img.src = layer.imageData;
+                    if (img.complete) h = layer.width * (img.height / img.width);
+                }
+                if (realX >= layer.x && realX <= layer.x + layer.width && realY >= layer.y && realY <= layer.y + h) {
+                    return layer;
+                }
             }
         }
         return null;
     }
-
-    function onMouseDown(e) {
+    
+    function onCanvasMouseDown(e) {
         const rect = editorCanvas.getBoundingClientRect();
         const mouseX = (e.clientX - rect.left) * (editorCanvas.width / rect.width);
         const mouseY = (e.clientY - rect.top) * (editorCanvas.height / rect.height);
-        const target = getElementUnderMouse(mouseX, mouseY);
-        if (target) {
-            dragTarget = target.type === 'text' ? target.index : 'logo';
+        const layer = getLayerUnderMouse(mouseX, mouseY);
+        if (layer) {
+            dragTarget = layer;
             const realX = mouseX / scale;
             const realY = mouseY / scale;
-            if (target.type === 'text') {
-                const t = tempElements.texts[target.index];
-                dragOffset.x = realX - t.x;
-                dragOffset.y = realY - t.y;
-            } else {
-                dragOffset.x = realX - tempElements.logo.x;
-                dragOffset.y = realY - tempElements.logo.y;
-            }
+            dragOffset.x = realX - layer.x;
+            dragOffset.y = realY - layer.y;
+            selectedLayerId = layer.id;
+            updateLayerListUI();
+            updatePropertiesPanel();
+            drawCanvas();
             e.preventDefault();
-            drawEditor();
         }
     }
-
-    function onMouseMove(e) {
-        if (dragTarget === null) return;
+    
+    function onCanvasMouseMove(e) {
+        if (!dragTarget) return;
         const rect = editorCanvas.getBoundingClientRect();
         const mouseX = (e.clientX - rect.left) * (editorCanvas.width / rect.width);
         const mouseY = (e.clientY - rect.top) * (editorCanvas.height / rect.height);
         let realX = mouseX / scale;
         let realY = mouseY / scale;
         const targetSize = getCurrentTemplateSize();
-        if (typeof dragTarget === 'number') {
-            const t = tempElements.texts[dragTarget];
-            let newX = realX - dragOffset.x;
-            let newY = realY - dragOffset.y;
-            ctx.font = `${t.fontSize}px system-ui`;
-            const textW = ctx.measureText(t.text).width;
+        let newX = realX - dragOffset.x;
+        let newY = realY - dragOffset.y;
+        if (dragTarget.type === 'text') {
+            ctx.font = `${dragTarget.fontSize}px system-ui`;
+            const textW = ctx.measureText(dragTarget.text).width;
             newX = Math.min(Math.max(0, newX), targetSize.w - textW);
-            newY = Math.min(Math.max(0, newY), targetSize.h - t.fontSize);
-            t.x = newX;
-            t.y = newY;
-        } else if (dragTarget === 'logo') {
-            let newX = realX - dragOffset.x;
-            let newY = realY - dragOffset.y;
-            const logoW = tempElements.logo.width;
-            let logoH = logoW;
-            if (tempElements.logo.dataUrl) {
+            newY = Math.min(Math.max(0, newY), targetSize.h - dragTarget.fontSize);
+            dragTarget.x = newX;
+            dragTarget.y = newY;
+        } else {
+            let imgH = dragTarget.width;
+            if (dragTarget.imageData) {
                 const img = new Image();
-                img.src = tempElements.logo.dataUrl;
-                if (img.complete) logoH = logoW * (img.height / img.width);
+                img.src = dragTarget.imageData;
+                if (img.complete) imgH = dragTarget.width * (img.height / img.width);
             }
-            newX = Math.min(Math.max(0, newX), targetSize.w - logoW);
-            newY = Math.min(Math.max(0, newY), targetSize.h - logoH);
-            tempElements.logo.x = newX;
-            tempElements.logo.y = newY;
+            newX = Math.min(Math.max(0, newX), targetSize.w - dragTarget.width);
+            newY = Math.min(Math.max(0, newY), targetSize.h - imgH);
+            dragTarget.x = newX;
+            dragTarget.y = newY;
         }
-        drawEditor();
+        drawCanvas();
     }
-
-    function onMouseUp() {
+    
+    function onCanvasMouseUp() {
         dragTarget = null;
+        saveTempToCurrent();
     }
-
-    // ---------- Применение настроек к реальным фото ----------
-    async function applyLayersToImage(file) {
+    
+    // Копирование слоёв в temp и обратно
+    function loadTempFromCurrent() {
+        tempLayers = JSON.parse(JSON.stringify(getCurrentLayers()));
+        if (tempLayers.length && !selectedLayerId) selectedLayerId = tempLayers[0].id;
+        updateLayerListUI();
+        updatePropertiesPanel();
+        resizeCanvas();
+        drawCanvas();
+    }
+    
+    function saveTempToCurrent() {
+        setCurrentLayers(JSON.parse(JSON.stringify(tempLayers)));
+    }
+    
+    // ---------- Наложение на реальные фото ----------
+    async function renderLayerOnPhoto(ctx, layer, scaleX, scaleY, targetSize) {
+        return new Promise((resolve) => {
+            if (!layer.visible) return resolve();
+            if (layer.type === 'text') {
+                const fontSizePx = layer.fontSize * scaleY;
+                ctx.font = `${fontSizePx}px system-ui, "Segoe UI"`;
+                ctx.fillStyle = layer.color;
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                const x = layer.x * scaleX;
+                const y = layer.y * scaleY;
+                ctx.fillText(layer.text, x, y + fontSizePx*0.7);
+                ctx.shadowBlur = 0;
+                resolve();
+            } else if (layer.type === 'image' && layer.imageData) {
+                const img = new Image();
+                img.onload = () => {
+                    const ratio = img.height / img.width;
+                    const drawW = layer.width * scaleX;
+                    const drawH = drawW * ratio;
+                    ctx.globalAlpha = layer.opacity;
+                    ctx.drawImage(img, layer.x * scaleX, layer.y * scaleY, drawW, drawH);
+                    ctx.globalAlpha = 1;
+                    resolve();
+                };
+                img.src = layer.imageData;
+                if (img.complete) img.onload(null);
+            } else resolve();
+        });
+    }
+    
+    async function applyLayersToFile(file) {
         return new Promise((resolve) => {
             const url = URL.createObjectURL(file);
             const img = new Image();
@@ -440,66 +820,42 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 const orientation = (img.width >= img.height) ? 'landscape' : 'portrait';
-                const elements = orientation === 'portrait' ? portraitElements : landscapeElements;
-                const targetSize = orientation === 'portrait' ? { w: 2250, h: 3000 } : { w: 3000, h: 2250 };
+                const layers = (orientation === 'portrait') ? portraitLayers : landscapeLayers;
+                const targetSize = (orientation === 'portrait') ? portraitSize : landscapeSize;
                 const scaleX = img.width / targetSize.w;
                 const scaleY = img.height / targetSize.h;
-
-                // тексты
-                for (let t of elements.texts) {
-                    if (!t.visible) continue;
-                    const fontSize = t.fontSize * scaleY;
-                    ctx.font = `${fontSize}px system-ui`;
-                    ctx.fillStyle = t.color;
-                    ctx.shadowBlur = 4;
-                    ctx.shadowColor = "rgba(0,0,0,0.5)";
-                    ctx.fillText(t.text, t.x * scaleX, (t.y + t.fontSize*0.7) * scaleY);
-                }
-                ctx.shadowBlur = 0;
-
-                // логотип
-                const logo = elements.logo;
-                if (logo.dataUrl) {
-                    const logoImg = new Image();
-                    logoImg.onload = () => {
-                        const ratio = logoImg.height / logoImg.width;
-                        const drawW = logo.width * scaleX;
-                        const drawH = drawW * ratio;
-                        ctx.globalAlpha = logo.opacity;
-                        ctx.drawImage(logoImg, logo.x * scaleX, logo.y * scaleY, drawW, drawH);
-                        ctx.globalAlpha = 1;
-                        const dataUrl = canvas.toDataURL('image/png');
-                        URL.revokeObjectURL(url);
-                        resolve(dataUrl);
-                    };
-                    logoImg.src = logo.dataUrl;
-                    if (logoImg.complete) logoImg.onload(null);
-                } else {
+                
+                (async () => {
+                    for (let layer of layers) {
+                        await renderLayerOnPhoto(ctx, layer, scaleX, scaleY, targetSize);
+                    }
                     const dataUrl = canvas.toDataURL('image/png');
                     URL.revokeObjectURL(url);
                     resolve(dataUrl);
-                }
+                })();
             };
             img.src = url;
         });
     }
-
+    
     async function renderAllPreviews() {
         if (!uploadedFiles.length) {
-            previewsDiv.innerHTML = '<div style="text-align:center; padding:40px;">Загрузите фото</div>';
+            document.getElementById('previewsContainer').innerHTML = '<div style="text-align:center; padding:40px;">Загрузите фото</div>';
             return;
         }
         if (isProcessing) return;
         isProcessing = true;
-        previewsDiv.innerHTML = '<div style="text-align:center; padding:20px;">⏳ Обработка...</div>';
+        const currentId = ++renderCounter;
+        const container = document.getElementById('previewsContainer');
+        container.innerHTML = '<div style="padding:20px; text-align:center;">⏳ Обработка...</div>';
         const results = [];
         for (let file of uploadedFiles) {
-            try {
-                const dataUrl = await applyLayersToImage(file);
-                results.push({ dataUrl, name: file.name.replace(/\.[^/.]+$/, '') + '_marked.png' });
-            } catch(e) { console.error(e); }
+            if (currentId !== renderCounter) { isProcessing=false; return; }
+            const dataUrl = await applyLayersToFile(file);
+            results.push({ dataUrl, name: file.name.replace(/\.[^/.]+$/, '') + '_marked.png' });
         }
-        previewsDiv.innerHTML = '';
+        if (currentId !== renderCounter) { isProcessing=false; return; }
+        container.innerHTML = '';
         for (let res of results) {
             const card = document.createElement('div');
             card.className = 'preview-card';
@@ -509,10 +865,10 @@
                     <button class="btn-small download-single" data-url="${res.dataUrl}" data-name="${res.name}">⬇️ Скачать</button>
                 </div>
             `;
-            previewsDiv.appendChild(card);
+            container.appendChild(card);
         }
         document.querySelectorAll('.download-single').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', () => {
                 const a = document.createElement('a');
                 a.href = btn.dataset.url;
                 a.download = btn.dataset.name;
@@ -521,12 +877,12 @@
         });
         isProcessing = false;
     }
-
-    async function downloadZip() {
-        if (!uploadedFiles.length) return alert("Нет фото");
+    
+    async function downloadAllZip() {
+        if (!uploadedFiles.length) return alert("Нет фото для скачивания");
         const zip = new JSZip();
         for (let file of uploadedFiles) {
-            const dataUrl = await applyLayersToImage(file);
+            const dataUrl = await applyLayersToFile(file);
             const base64 = dataUrl.split(',')[1];
             zip.file(file.name.replace(/\.[^/.]+$/, '') + '_marked.png', base64, { base64: true });
         }
@@ -537,100 +893,77 @@
         a.click();
         URL.revokeObjectURL(a.href);
     }
-
-    // Загрузка логотипа (добавим в интерфейс)
-    function addLogoUploader() {
-        const div = document.createElement('div');
-        div.style.marginBottom = '20px';
-        div.innerHTML = `
-            <label style="font-weight:600;">🖼 Логотип (PNG с прозрачностью):</label>
-            <input type="file" id="logoUploader" accept="image/png,image/jpeg,image/webp">
-            <button id="clearLogoBtn" class="btn-outline" style="margin-left:10px;">🗑 Удалить логотип</button>
-        `;
-        const headerDiv = document.querySelector('.header');
-        headerDiv.after(div);
-        document.getElementById('logoUploader').addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    setLogoDataUrl(ev.target.result);
-                    renderAllPreviews();
-                };
-                reader.readAsDataURL(e.target.files[0]);
-            }
-        });
-        document.getElementById('clearLogoBtn').addEventListener('click', () => {
-            setLogoDataUrl(null);
-            renderAllPreviews();
-        });
-    }
-
-    // ---------- Редактор: открыть/закрыть ----------
-    function openEditor() {
-        // копируем текущие настройки во временные
-        const elements = activeOrientation === 'portrait' ? portraitElements : landscapeElements;
-        tempElements = JSON.parse(JSON.stringify(elements));
-        resizeCanvas();
-        drawEditor();
-        editorModal.style.display = 'flex';
-    }
-
-    function closeEditor(save) {
-        if (save) {
-            // сохраняем изменённые tempElements в активную ориентацию
-            if (activeOrientation === 'portrait') {
-                portraitElements = tempElements;
-            } else {
-                landscapeElements = tempElements;
-            }
-            saveSettings();
-            renderAllPreviews();
-        }
-        editorModal.style.display = 'none';
-        dragTarget = null;
-    }
-
-    // ---------- Инициализация ----------
+    
+    // ---------- Инициализация интерфейса ----------
     function init() {
-        loadSettings();
-        addLogoUploader();
-        // события
-        photoInput.addEventListener('change', (e) => {
+        loadAllSettings();
+        
+        // Главные кнопки
+        document.getElementById('photoInput').addEventListener('change', (e) => {
             if (e.target.files.length) {
                 uploadedFiles.push(...Array.from(e.target.files));
                 renderAllPreviews();
             }
-            photoInput.value = '';
+            e.target.value = '';
         });
-        clearBtn.addEventListener('click', () => {
+        document.getElementById('clearPhotosBtn').addEventListener('click', () => {
             uploadedFiles = [];
             renderAllPreviews();
         });
-        downloadZipBtn.addEventListener('click', downloadZip);
-        openEditorBtn.addEventListener('click', openEditor);
-        cancelEditor.addEventListener('click', () => closeEditor(false));
-        saveEditor.addEventListener('click', () => closeEditor(true));
-        orientationBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                orientationBtns.forEach(b => b.classList.remove('active'));
+        document.getElementById('downloadZipBtn').addEventListener('click', downloadAllZip);
+        
+        // Конструктор
+        const modal = document.getElementById('constructorModal');
+        document.getElementById('openConstructorBtn').onclick = () => {
+            loadTempFromCurrent();
+            modal.style.display = 'flex';
+        };
+        document.getElementById('cancelConstructorBtn').onclick = () => {
+            modal.style.display = 'none';
+        };
+        document.getElementById('applyConstructorBtn').onclick = () => {
+            saveTempToCurrent();
+            modal.style.display = 'none';
+            renderAllPreviews();
+        };
+        
+        // Переключение ориентации в конструкторе
+        document.querySelectorAll('.orientation-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.orientation-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 activeOrientation = btn.dataset.orient;
-                if (editorModal.style.display === 'flex') {
-                    const elements = activeOrientation === 'portrait' ? portraitElements : landscapeElements;
-                    tempElements = JSON.parse(JSON.stringify(elements));
-                    resizeCanvas();
-                    drawEditor();
-                } else {
-                    renderAllPreviews();
-                }
+                loadTempFromCurrent();
             });
         });
-        editorCanvas.addEventListener('mousedown', onMouseDown);
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
+        
+        // Кнопки добавления слоёв
+        document.getElementById('addTextLayerBtn').addEventListener('click', addTextLayer);
+        document.getElementById('addImageLayerBtn').addEventListener('click', addImageLayer);
+        document.getElementById('deleteLayerBtn').addEventListener('click', deleteSelectedLayer);
+        
+        // Свойства
+        document.getElementById('propVisible').addEventListener('change', applyPropertyChanges);
+        document.getElementById('propText').addEventListener('input', applyPropertyChanges);
+        document.getElementById('propSize').addEventListener('input', (e) => {
+            document.getElementById('sizeValue').innerText = e.target.value;
+            applyPropertyChanges();
+        });
+        document.getElementById('propColor').addEventListener('input', applyPropertyChanges);
+        document.getElementById('propOpacity').addEventListener('input', applyPropertyChanges);
+        document.getElementById('propImageUpload').addEventListener('change', applyPropertyChanges);
+        
+        // Мышь на canvas
+        editorCanvas.addEventListener('mousedown', onCanvasMouseDown);
+        window.addEventListener('mousemove', onCanvasMouseMove);
+        window.addEventListener('mouseup', onCanvasMouseUp);
+        window.addEventListener('resize', () => {
+            if (modal.style.display === 'flex') resizeCanvas();
+        });
+        
         renderAllPreviews();
     }
-
+    
     init();
 </script>
 </body>
