@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Конструктор наложений для СТО</title>
+    <title>Конструктор слоёв для СТО</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
             font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
             background: #f1f5f9;
@@ -20,8 +18,8 @@
             margin: 0 auto;
             background: white;
             border-radius: 32px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
             padding: 24px 28px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
         }
         .header {
             display: flex;
@@ -39,22 +37,12 @@
             font-weight: 500;
             cursor: pointer;
             transition: 0.2s;
-            font-size: 0.9rem;
         }
-        button:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-        }
+        button:hover { background: #2563eb; transform: translateY(-1px); }
         .btn-outline {
             background: white;
             color: #1e293b;
             border: 1px solid #cbd5e1;
-        }
-        .btn-danger {
-            background: #ef4444;
-        }
-        .btn-danger:hover {
-            background: #dc2626;
         }
         .upload-area {
             background: #fefce8;
@@ -97,7 +85,6 @@
             font-size: 1rem;
             margin-top: 16px;
         }
-        /* Модальное окно конструктора */
         .modal {
             display: none;
             position: fixed;
@@ -136,7 +123,7 @@
             flex-wrap: wrap;
         }
         .layers-sidebar {
-            width: 280px;
+            width: 300px;
             background: #f8fafc;
             border-radius: 24px;
             padding: 16px;
@@ -167,7 +154,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
         }
         .layer-item {
@@ -198,32 +185,22 @@
             white-space: nowrap;
             text-overflow: ellipsis;
         }
-        .layer-actions-buttons {
+        .layer-actions {
             display: flex;
-            gap: 4px;
+            gap: 6px;
+            align-items: center;
         }
-        .layer-actions-buttons button {
+        .layer-actions button {
             padding: 2px 6px;
             font-size: 0.7rem;
             background: #f1f5f9;
             color: #1e293b;
+            border-radius: 20px;
         }
-        .prop-group {
-            margin-top: 12px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 12px;
-        }
-        .prop-group label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            display: block;
-            margin: 6px 0 2px;
-        }
-        input, select {
-            width: 100%;
-            padding: 6px 10px;
-            border-radius: 14px;
-            border: 1px solid #cbd5e1;
+        .visibility-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
         .flex-between {
             display: flex;
@@ -255,6 +232,18 @@
             justify-content: flex-end;
             gap: 12px;
         }
+        .prop-group {
+            margin-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 12px;
+        }
+        .prop-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: block;
+            margin: 6px 0 2px;
+        }
+        input[type="range"] { width: 100%; }
     </style>
 </head>
 <body>
@@ -294,33 +283,19 @@
                     </div>
                 </div>
                 <div id="layerList" class="layer-list"></div>
-                <div id="layerProperties" style="margin-top: 8px;">
+                <div id="layerProperties">
                     <div class="prop-group">
-                        <label>👁️ Видимость</label>
-                        <input type="checkbox" id="propVisible">
-                    </div>
-                    <div class="prop-group" id="propTextGroup">
-                        <label>📝 Текст</label>
-                        <input type="text" id="propText" placeholder="Текст">
-                    </div>
-                    <div class="prop-group" id="propImageGroup">
-                        <label>🖼️ Загрузить картинку</label>
-                        <input type="file" id="propImageUpload" accept="image/png,image/jpeg,image/webp">
-                    </div>
-                    <div class="prop-group">
-                        <label>📏 Размер (шрифт / ширина картинки)</label>
-                        <input type="range" id="propSize" min="10" max="400" step="2" value="40">
-                        <span id="sizeValue">40</span>
+                        <label>🌀 Прозрачность (0-1)</label>
+                        <input type="range" id="propOpacity" min="0" max="1" step="0.01" value="1">
                     </div>
                     <div class="prop-group" id="propColorGroup">
                         <label>🎨 Цвет текста</label>
                         <input type="color" id="propColor" value="#ffffff">
                     </div>
-                    <div class="prop-group">
-                        <label>🌀 Прозрачность (0-1)</label>
-                        <input type="range" id="propOpacity" min="0" max="1" step="0.01" value="1">
+                    <div class="prop-group" id="propImageUploadGroup">
+                        <label>🖼️ Заменить изображение</label>
+                        <input type="file" id="propImageUpload" accept="image/png,image/jpeg,image/webp">
                     </div>
-                    <button id="deleteLayerBtn" class="btn-danger" style="width:100%; margin-top:16px;">🗑 Удалить слой</button>
                 </div>
             </div>
             <div class="canvas-area">
@@ -335,27 +310,25 @@
 </div>
 
 <script>
-    // ------------------- ГЛОБАЛЬНЫЕ НАСТРОЙКИ -------------------
-    let portraitLayers = [];    // слои для вертикального шаблона
-    let landscapeLayers = [];   // для горизонтального
+    // ---------- Глобальные данные ----------
+    let portraitLayers = [];
+    let landscapeLayers = [];
     let activeOrientation = "portrait";
     let selectedLayerId = null;
     let dragTarget = null;
     let dragOffset = { x: 0, y: 0 };
+    let isResizing = false;
+    let resizeStart = { x: 0, y: 0, width: 0, height: 0, fontSize: 0 };
     
-    // Данные для конструктора (копия)
-    let tempLayers = [];
+    let tempLayers = [];  // копия для конструктора
     
-    // Размеры шаблонов
     const portraitSize = { w: 2250, h: 3000 };
     const landscapeSize = { w: 3000, h: 2250 };
     
-    // Основные файлы фото
     let uploadedFiles = [];
     let isProcessing = false;
     let renderCounter = 0;
     
-    // DOM элементы
     const editorCanvas = document.getElementById('editorCanvas');
     let ctx = editorCanvas.getContext('2d');
     let canvasWidth = 0, canvasHeight = 0, scale = 1;
@@ -372,25 +345,24 @@
     function setCurrentLayers(layers) {
         if (activeOrientation === 'portrait') portraitLayers = layers;
         else landscapeLayers = layers;
-        saveAllSettings();
+        saveToLocalStorage();
     }
     
     function generateId(prefix) {
-        return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
     }
     
-    // Сохранение / загрузка в localStorage
-    function saveAllSettings() {
+    function saveToLocalStorage() {
         const data = {
             portraitLayers,
             landscapeLayers,
-            version: 3
+            version: 6
         };
-        localStorage.setItem('sto_constructor_v3', JSON.stringify(data));
+        localStorage.setItem('sto_constructor_v6', JSON.stringify(data));
     }
     
-    function loadAllSettings() {
-        const saved = localStorage.getItem('sto_constructor_v3');
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem('sto_constructor_v6');
         if (saved) {
             try {
                 const data = JSON.parse(saved);
@@ -398,7 +370,6 @@
                 if (data.landscapeLayers) landscapeLayers = data.landscapeLayers;
             } catch(e) {}
         }
-        // Если нет слоёв, создаём демо
         if (!portraitLayers || portraitLayers.length === 0) {
             portraitLayers = [
                 { id: generateId('text'), type: 'text', text: 'ДИАГНОСТИКА', fontSize: 48, color: '#ffffff', x: 120, y: 280, opacity: 1, visible: true },
@@ -410,16 +381,15 @@
             landscapeLayers = JSON.parse(JSON.stringify(portraitLayers));
             landscapeLayers.forEach(l => { l.x = 200; l.y = 200; });
         }
-        // Убедимся, что у каждого слоя есть id
         [portraitLayers, landscapeLayers].forEach(layers => {
             layers.forEach(layer => {
                 if (!layer.id) layer.id = generateId(layer.type);
             });
         });
-        saveAllSettings();
+        saveToLocalStorage();
     }
     
-    // Добавление слоёв
+    // Добавление текстового слоя
     function addTextLayer() {
         const newLayer = {
             id: generateId('text'),
@@ -435,17 +405,17 @@
         tempLayers.push(newLayer);
         selectedLayerId = newLayer.id;
         updateLayerListUI();
-        updatePropertiesPanel();
         drawCanvas();
         saveTempToCurrent();
     }
     
+    // Добавление графического слоя (сразу открываем выбор файла)
     function addImageLayer() {
         const newLayer = {
             id: generateId('img'),
             type: 'image',
             imageData: null,
-            width: 120,
+            width: 150,
             x: 200,
             y: 200,
             opacity: 1,
@@ -454,151 +424,173 @@
         tempLayers.push(newLayer);
         selectedLayerId = newLayer.id;
         updateLayerListUI();
-        updatePropertiesPanel();
         drawCanvas();
         saveTempToCurrent();
-        // Предложить сразу загрузить картинку
+        
+        // Открываем диалог выбора файла для этого слоя
         setTimeout(() => {
-            if (selectedLayerId === newLayer.id) {
-                document.getElementById('propImageUpload').click();
-            }
-        }, 100);
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/png,image/jpeg,image/webp';
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const layer = tempLayers.find(l => l.id === newLayer.id);
+                        if (layer) {
+                            layer.imageData = ev.target.result;
+                            // Обновляем отображение в списке слоёв
+                            updateLayerListUI();
+                            drawCanvas();
+                            saveTempToCurrent();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            fileInput.click();
+        }, 50);
     }
     
-    function deleteSelectedLayer() {
-        if (!selectedLayerId) return;
-        tempLayers = tempLayers.filter(l => l.id !== selectedLayerId);
-        if (tempLayers.length > 0) selectedLayerId = tempLayers[0].id;
-        else selectedLayerId = null;
+    function deleteLayer(layerId) {
+        tempLayers = tempLayers.filter(l => l.id !== layerId);
+        if (selectedLayerId === layerId) {
+            selectedLayerId = tempLayers.length > 0 ? tempLayers[0].id : null;
+        }
         updateLayerListUI();
-        updatePropertiesPanel();
         drawCanvas();
         saveTempToCurrent();
     }
     
-    function moveLayerUp(layerId) {
-        const index = tempLayers.findIndex(l => l.id === layerId);
-        if (index > 0) {
-            [tempLayers[index-1], tempLayers[index]] = [tempLayers[index], tempLayers[index-1]];
+    function toggleVisibility(layerId, visible) {
+        const layer = tempLayers.find(l => l.id === layerId);
+        if (layer) {
+            layer.visible = visible;
             updateLayerListUI();
             drawCanvas();
             saveTempToCurrent();
         }
     }
     
-    function moveLayerDown(layerId) {
-        const index = tempLayers.findIndex(l => l.id === layerId);
-        if (index < tempLayers.length-1 && index !== -1) {
-            [tempLayers[index+1], tempLayers[index]] = [tempLayers[index], tempLayers[index+1]];
-            updateLayerListUI();
+    function updateOpacity(value) {
+        const layer = tempLayers.find(l => l.id === selectedLayerId);
+        if (layer) {
+            layer.opacity = parseFloat(value);
             drawCanvas();
             saveTempToCurrent();
         }
     }
     
-    // UI списка слоёв
+    function updateTextColor(value) {
+        const layer = tempLayers.find(l => l.id === selectedLayerId);
+        if (layer && layer.type === 'text') {
+            layer.color = value;
+            drawCanvas();
+            saveTempToCurrent();
+        }
+    }
+    
+    function updateImageFile(file) {
+        const layer = tempLayers.find(l => l.id === selectedLayerId);
+        if (layer && layer.type === 'image' && file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                layer.imageData = e.target.result;
+                updateLayerListUI();   // обновить название слоя
+                drawCanvas();
+                saveTempToCurrent();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
     function updateLayerListUI() {
         const container = document.getElementById('layerList');
         container.innerHTML = '';
         tempLayers.forEach(layer => {
             const div = document.createElement('div');
             div.className = `layer-item ${selectedLayerId === layer.id ? 'active' : ''}`;
-            div.onclick = () => {
-                selectedLayerId = layer.id;
-                updateLayerListUI();
-                updatePropertiesPanel();
-                drawCanvas();
+            div.onclick = (e) => {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+                    selectedLayerId = layer.id;
+                    updateLayerListUI();
+                    const opacitySlider = document.getElementById('propOpacity');
+                    const colorPicker = document.getElementById('propColor');
+                    if (layer.type === 'text') {
+                        document.getElementById('propColorGroup').style.display = 'block';
+                        document.getElementById('propImageUploadGroup').style.display = 'none';
+                        colorPicker.value = layer.color;
+                    } else {
+                        document.getElementById('propColorGroup').style.display = 'none';
+                        document.getElementById('propImageUploadGroup').style.display = 'block';
+                    }
+                    opacitySlider.value = layer.opacity;
+                    drawCanvas();
+                }
             };
             const icon = layer.type === 'text' ? '📝' : '🖼️';
-            const name = layer.type === 'text' ? (layer.text.substring(0,15) || 'текст') : 'Изображение';
+            let displayName = layer.type === 'text' ? layer.text : (layer.imageData ? 'Изображение' : 'Нет картинки');
+            if (displayName.length > 20) displayName = displayName.substring(0,18)+'...';
             div.innerHTML = `
                 <div class="layer-icon">${icon}</div>
-                <div class="layer-name">${name} ${!layer.visible ? '🙈' : ''}</div>
-                <div class="layer-actions-buttons">
-                    <button class="move-up" data-id="${layer.id}" title="Выше">↑</button>
-                    <button class="move-down" data-id="${layer.id}" title="Ниже">↓</button>
+                <div class="layer-name" data-id="${layer.id}" data-type="${layer.type}" title="Двойной клик для редактирования текста">${escapeHtml(displayName)}</div>
+                <div class="layer-actions">
+                    <input type="checkbox" class="visibility-checkbox" data-id="${layer.id}" ${layer.visible ? 'checked' : ''}>
+                    <button class="delete-layer" data-id="${layer.id}" title="Удалить">✖</button>
                 </div>
             `;
             container.appendChild(div);
         });
-        // вешаем события
-        document.querySelectorAll('.move-up').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+        
+        document.querySelectorAll('.visibility-checkbox').forEach(cb => {
+            cb.addEventListener('change', (e) => {
                 e.stopPropagation();
-                moveLayerUp(btn.dataset.id);
+                toggleVisibility(cb.dataset.id, cb.checked);
             });
         });
-        document.querySelectorAll('.move-down').forEach(btn => {
+        document.querySelectorAll('.delete-layer').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                moveLayerDown(btn.dataset.id);
+                deleteLayer(btn.dataset.id);
+            });
+        });
+        // Редактирование текста по двойному клику
+        document.querySelectorAll('.layer-name').forEach(el => {
+            el.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                const layerId = el.dataset.id;
+                const layer = tempLayers.find(l => l.id === layerId);
+                if (layer && layer.type === 'text') {
+                    const newText = prompt('Введите текст:', layer.text);
+                    if (newText !== null && newText !== '') {
+                        layer.text = newText;
+                        updateLayerListUI();
+                        drawCanvas();
+                        saveTempToCurrent();
+                    }
+                }
             });
         });
     }
     
-    function updatePropertiesPanel() {
-        const layer = tempLayers.find(l => l.id === selectedLayerId);
-        if (!layer) {
-            document.getElementById('propVisible').disabled = true;
-            return;
-        }
-        document.getElementById('propVisible').disabled = false;
-        document.getElementById('propVisible').checked = layer.visible;
-        document.getElementById('propOpacity').value = layer.opacity;
-        if (layer.type === 'text') {
-            document.getElementById('propTextGroup').style.display = 'block';
-            document.getElementById('propImageGroup').style.display = 'none';
-            document.getElementById('propColorGroup').style.display = 'block';
-            document.getElementById('propText').value = layer.text;
-            document.getElementById('propSize').value = layer.fontSize;
-            document.getElementById('sizeValue').innerText = layer.fontSize;
-            document.getElementById('propColor').value = layer.color;
-        } else {
-            document.getElementById('propTextGroup').style.display = 'none';
-            document.getElementById('propImageGroup').style.display = 'block';
-            document.getElementById('propColorGroup').style.display = 'none';
-            document.getElementById('propSize').value = layer.width;
-            document.getElementById('sizeValue').innerText = layer.width;
-        }
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
     
-    function applyPropertyChanges() {
-        const layer = tempLayers.find(l => l.id === selectedLayerId);
-        if (!layer) return;
-        layer.visible = document.getElementById('propVisible').checked;
-        layer.opacity = parseFloat(document.getElementById('propOpacity').value);
-        if (layer.type === 'text') {
-            layer.text = document.getElementById('propText').value;
-            layer.fontSize = parseInt(document.getElementById('propSize').value, 10);
-            layer.color = document.getElementById('propColor').value;
-            document.getElementById('sizeValue').innerText = layer.fontSize;
-        } else {
-            layer.width = parseInt(document.getElementById('propSize').value, 10);
-            document.getElementById('sizeValue').innerText = layer.width;
-            const fileInput = document.getElementById('propImageUpload');
-            if (fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    layer.imageData = e.target.result;
-                    drawCanvas();
-                    saveTempToCurrent();
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-                fileInput.value = '';
-            }
-        }
-        drawCanvas();
-        updateLayerListUI();
-        saveTempToCurrent();
-    }
-    
-    // ---------- Отрисовка холста конструктора ----------
+    // ---------- Отрисовка холста с сеткой и слоями ----------
     function resizeCanvas() {
         const target = getCurrentTemplateSize();
-        const maxW = editorCanvas.parentElement.clientWidth - 40;
-        const maxH = window.innerHeight * 0.55;
+        const container = document.querySelector('.canvas-area');
+        const maxW = container.clientWidth - 40;
+        const maxH = window.innerHeight * 0.6;
         const ratio = target.w / target.h;
-        let drawW = Math.min(maxW, 800);
+        let drawW = Math.min(maxW, 900);
         let drawH = drawW / ratio;
         if (drawH > maxH) { drawH = maxH; drawW = drawH * ratio; }
         editorCanvas.width = drawW;
@@ -615,15 +607,25 @@
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         ctx.fillStyle = "#f8fafc";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-        // сетка
+        
+        // сетка с подписями
         ctx.strokeStyle = "#cbd5e1";
         ctx.lineWidth = 0.5;
-        for (let i = 0; i < target.w; i += 300) {
+        ctx.font = "10px system-ui";
+        ctx.fillStyle = "#64748b";
+        const step = 300;
+        for (let x = 0; x <= target.w; x += step) {
             ctx.beginPath();
-            ctx.moveTo(i*scale, 0); ctx.lineTo(i*scale, canvasHeight); ctx.stroke();
-            ctx.moveTo(0, i*scale); ctx.lineTo(canvasWidth, i*scale); ctx.stroke();
+            ctx.moveTo(x*scale, 0); ctx.lineTo(x*scale, canvasHeight); ctx.stroke();
+            ctx.fillText(x, x*scale+2, 12);
         }
-        // рисуем все слои в порядке от нижнего к верхнему
+        for (let y = 0; y <= target.h; y += step) {
+            ctx.beginPath();
+            ctx.moveTo(0, y*scale); ctx.lineTo(canvasWidth, y*scale); ctx.stroke();
+            ctx.fillText(y, 2, y*scale+10);
+        }
+        
+        // рисуем слои (от нижнего к верхнему)
         for (let layer of tempLayers) {
             if (!layer.visible) continue;
             if (layer.type === 'text') {
@@ -640,6 +642,10 @@
                     ctx.strokeStyle = "#f97316";
                     ctx.lineWidth = 2;
                     ctx.strokeRect(layer.x*scale, layer.y*scale, metrics.width, layer.fontSize);
+                    const handleX = (layer.x + metrics.width) * scale - 6;
+                    const handleY = (layer.y + layer.fontSize) * scale - 6;
+                    ctx.fillStyle = "#f97316";
+                    ctx.fillRect(handleX, handleY, 10, 10);
                 }
                 ctx.restore();
             } else if (layer.type === 'image') {
@@ -657,11 +663,16 @@
                             ctx.strokeStyle = "#f97316";
                             ctx.lineWidth = 2;
                             ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, drawH*scale);
+                            const handleX = (layer.x + layer.width) * scale - 6;
+                            const handleY = (layer.y + drawH) * scale - 6;
+                            ctx.fillStyle = "#f97316";
+                            ctx.fillRect(handleX, handleY, 10, 10);
                         }
                     } else {
                         img.onload = () => drawCanvas();
                     }
                 } else {
+                    // Заглушка для пустого изображения
                     ctx.fillStyle = "#cbd5e1";
                     ctx.fillRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
                     ctx.fillStyle = "#475569";
@@ -670,17 +681,20 @@
                     if (selectedLayerId === layer.id) {
                         ctx.strokeStyle = "#f97316";
                         ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
+                        const handleX = (layer.x + layer.width) * scale - 6;
+                        const handleY = (layer.y + layer.width) * scale - 6;
+                        ctx.fillStyle = "#f97316";
+                        ctx.fillRect(handleX, handleY, 10, 10);
                     }
                 }
             }
         }
     }
     
-    // ---------- Перетаскивание мышью ----------
+    // ---------- Обработка мыши (перетаскивание и ресайз) ----------
     function getLayerUnderMouse(mouseCanvasX, mouseCanvasY) {
         const realX = mouseCanvasX / scale;
         const realY = mouseCanvasY / scale;
-        // идём с последнего (верхний слой)
         for (let i = tempLayers.length-1; i >= 0; i--) {
             const layer = tempLayers[i];
             if (!layer.visible) continue;
@@ -707,10 +721,63 @@
         return null;
     }
     
-    function onCanvasMouseDown(e) {
+    function isOnResizeHandle(mouseCanvasX, mouseCanvasY, layer) {
+        if (!layer || selectedLayerId !== layer.id) return false;
+        const realX = mouseCanvasX / scale;
+        const realY = mouseCanvasY / scale;
+        if (layer.type === 'text') {
+            ctx.font = `${layer.fontSize}px system-ui`;
+            const metrics = ctx.measureText(layer.text);
+            const right = layer.x + metrics.width;
+            const bottom = layer.y + layer.fontSize;
+            const handleSize = 15 / scale;
+            if (realX >= right - handleSize && realX <= right + handleSize && realY >= bottom - handleSize && realY <= bottom + handleSize) {
+                return true;
+            }
+        } else {
+            let h = layer.width;
+            if (layer.imageData) {
+                const img = new Image();
+                img.src = layer.imageData;
+                if (img.complete) h = layer.width * (img.height / img.width);
+            }
+            const right = layer.x + layer.width;
+            const bottom = layer.y + h;
+            const handleSize = 15 / scale;
+            if (realX >= right - handleSize && realX <= right + handleSize && realY >= bottom - handleSize && realY <= bottom + handleSize) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    function onMouseDown(e) {
         const rect = editorCanvas.getBoundingClientRect();
         const mouseX = (e.clientX - rect.left) * (editorCanvas.width / rect.width);
         const mouseY = (e.clientY - rect.top) * (editorCanvas.height / rect.height);
+        
+        const selectedLayer = tempLayers.find(l => l.id === selectedLayerId);
+        if (selectedLayer && isOnResizeHandle(mouseX, mouseY, selectedLayer)) {
+            isResizing = true;
+            const realX = mouseX / scale;
+            const realY = mouseY / scale;
+            if (selectedLayer.type === 'text') {
+                ctx.font = `${selectedLayer.fontSize}px system-ui`;
+                const metrics = ctx.measureText(selectedLayer.text);
+                resizeStart = { x: realX, y: realY, width: metrics.width, height: selectedLayer.fontSize, fontSize: selectedLayer.fontSize };
+            } else {
+                let h = selectedLayer.width;
+                if (selectedLayer.imageData) {
+                    const img = new Image();
+                    img.src = selectedLayer.imageData;
+                    if (img.complete) h = selectedLayer.width * (img.height / img.width);
+                }
+                resizeStart = { x: realX, y: realY, width: selectedLayer.width, height: h, fontSize: null };
+            }
+            e.preventDefault();
+            return;
+        }
+        
         const layer = getLayerUnderMouse(mouseX, mouseY);
         if (layer) {
             dragTarget = layer;
@@ -720,55 +787,95 @@
             dragOffset.y = realY - layer.y;
             selectedLayerId = layer.id;
             updateLayerListUI();
-            updatePropertiesPanel();
             drawCanvas();
             e.preventDefault();
         }
     }
     
-    function onCanvasMouseMove(e) {
-        if (!dragTarget) return;
+    function onMouseMove(e) {
         const rect = editorCanvas.getBoundingClientRect();
         const mouseX = (e.clientX - rect.left) * (editorCanvas.width / rect.width);
         const mouseY = (e.clientY - rect.top) * (editorCanvas.height / rect.height);
-        let realX = mouseX / scale;
-        let realY = mouseY / scale;
-        const targetSize = getCurrentTemplateSize();
-        let newX = realX - dragOffset.x;
-        let newY = realY - dragOffset.y;
-        if (dragTarget.type === 'text') {
-            ctx.font = `${dragTarget.fontSize}px system-ui`;
-            const textW = ctx.measureText(dragTarget.text).width;
-            newX = Math.min(Math.max(0, newX), targetSize.w - textW);
-            newY = Math.min(Math.max(0, newY), targetSize.h - dragTarget.fontSize);
-            dragTarget.x = newX;
-            dragTarget.y = newY;
-        } else {
-            let imgH = dragTarget.width;
-            if (dragTarget.imageData) {
-                const img = new Image();
-                img.src = dragTarget.imageData;
-                if (img.complete) imgH = dragTarget.width * (img.height / img.width);
+        
+        if (isResizing && selectedLayerId) {
+            const layer = tempLayers.find(l => l.id === selectedLayerId);
+            if (!layer) return;
+            const realX = mouseX / scale;
+            const realY = mouseY / scale;
+            const deltaX = realX - resizeStart.x;
+            const deltaY = realY - resizeStart.y;
+            const targetSize = getCurrentTemplateSize();
+            if (layer.type === 'text') {
+                let newFontSize = Math.max(12, resizeStart.fontSize + deltaY);
+                newFontSize = Math.min(200, newFontSize);
+                layer.fontSize = newFontSize;
+                drawCanvas();
+            } else {
+                let newWidth = Math.max(20, resizeStart.width + deltaX);
+                newWidth = Math.min(targetSize.w - layer.x, newWidth);
+                layer.width = newWidth;
+                drawCanvas();
             }
-            newX = Math.min(Math.max(0, newX), targetSize.w - dragTarget.width);
-            newY = Math.min(Math.max(0, newY), targetSize.h - imgH);
-            dragTarget.x = newX;
-            dragTarget.y = newY;
+            saveTempToCurrent();
+            return;
         }
-        drawCanvas();
+        
+        if (dragTarget) {
+            const realX = mouseX / scale;
+            const realY = mouseY / scale;
+            const targetSize = getCurrentTemplateSize();
+            let newX = realX - dragOffset.x;
+            let newY = realY - dragOffset.y;
+            if (dragTarget.type === 'text') {
+                ctx.font = `${dragTarget.fontSize}px system-ui`;
+                const textW = ctx.measureText(dragTarget.text).width;
+                newX = Math.min(Math.max(0, newX), targetSize.w - textW);
+                newY = Math.min(Math.max(0, newY), targetSize.h - dragTarget.fontSize);
+                dragTarget.x = newX;
+                dragTarget.y = newY;
+            } else {
+                let imgH = dragTarget.width;
+                if (dragTarget.imageData) {
+                    const img = new Image();
+                    img.src = dragTarget.imageData;
+                    if (img.complete) imgH = dragTarget.width * (img.height / img.width);
+                }
+                newX = Math.min(Math.max(0, newX), targetSize.w - dragTarget.width);
+                newY = Math.min(Math.max(0, newY), targetSize.h - imgH);
+                dragTarget.x = newX;
+                dragTarget.y = newY;
+            }
+            drawCanvas();
+            saveTempToCurrent();
+        }
     }
     
-    function onCanvasMouseUp() {
+    function onMouseUp() {
         dragTarget = null;
-        saveTempToCurrent();
+        isResizing = false;
     }
     
-    // Копирование слоёв в temp и обратно
+    // ---------- Работа с временными слоями ----------
     function loadTempFromCurrent() {
         tempLayers = JSON.parse(JSON.stringify(getCurrentLayers()));
         if (tempLayers.length && !selectedLayerId) selectedLayerId = tempLayers[0].id;
         updateLayerListUI();
-        updatePropertiesPanel();
+        const opacitySlider = document.getElementById('propOpacity');
+        const colorPicker = document.getElementById('propColor');
+        if (selectedLayerId) {
+            const layer = tempLayers.find(l => l.id === selectedLayerId);
+            if (layer) {
+                opacitySlider.value = layer.opacity;
+                if (layer.type === 'text') {
+                    document.getElementById('propColorGroup').style.display = 'block';
+                    document.getElementById('propImageUploadGroup').style.display = 'none';
+                    colorPicker.value = layer.color;
+                } else {
+                    document.getElementById('propColorGroup').style.display = 'none';
+                    document.getElementById('propImageUploadGroup').style.display = 'block';
+                }
+            }
+        }
         resizeCanvas();
         drawCanvas();
     }
@@ -778,19 +885,17 @@
     }
     
     // ---------- Наложение на реальные фото ----------
-    async function renderLayerOnPhoto(ctx, layer, scaleX, scaleY, targetSize) {
+    async function renderLayerOnPhoto(ctxPhoto, layer, scaleX, scaleY) {
         return new Promise((resolve) => {
             if (!layer.visible) return resolve();
             if (layer.type === 'text') {
                 const fontSizePx = layer.fontSize * scaleY;
-                ctx.font = `${fontSizePx}px system-ui, "Segoe UI"`;
-                ctx.fillStyle = layer.color;
-                ctx.shadowBlur = 4;
-                ctx.shadowColor = "rgba(0,0,0,0.5)";
-                const x = layer.x * scaleX;
-                const y = layer.y * scaleY;
-                ctx.fillText(layer.text, x, y + fontSizePx*0.7);
-                ctx.shadowBlur = 0;
+                ctxPhoto.font = `${fontSizePx}px system-ui, "Segoe UI"`;
+                ctxPhoto.fillStyle = layer.color;
+                ctxPhoto.shadowBlur = 4;
+                ctxPhoto.shadowColor = "rgba(0,0,0,0.5)";
+                ctxPhoto.fillText(layer.text, layer.x * scaleX, (layer.y + layer.fontSize*0.7) * scaleY);
+                ctxPhoto.shadowBlur = 0;
                 resolve();
             } else if (layer.type === 'image' && layer.imageData) {
                 const img = new Image();
@@ -798,13 +903,14 @@
                     const ratio = img.height / img.width;
                     const drawW = layer.width * scaleX;
                     const drawH = drawW * ratio;
-                    ctx.globalAlpha = layer.opacity;
-                    ctx.drawImage(img, layer.x * scaleX, layer.y * scaleY, drawW, drawH);
-                    ctx.globalAlpha = 1;
+                    ctxPhoto.globalAlpha = layer.opacity;
+                    ctxPhoto.drawImage(img, layer.x * scaleX, layer.y * scaleY, drawW, drawH);
+                    ctxPhoto.globalAlpha = 1;
                     resolve();
                 };
                 img.src = layer.imageData;
                 if (img.complete) img.onload(null);
+                else resolve();
             } else resolve();
         });
     }
@@ -820,14 +926,14 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 const orientation = (img.width >= img.height) ? 'landscape' : 'portrait';
-                const layers = (orientation === 'portrait') ? portraitLayers : landscapeLayers;
+                const layersList = (orientation === 'portrait') ? portraitLayers : landscapeLayers;
                 const targetSize = (orientation === 'portrait') ? portraitSize : landscapeSize;
                 const scaleX = img.width / targetSize.w;
                 const scaleY = img.height / targetSize.h;
                 
                 (async () => {
-                    for (let layer of layers) {
-                        await renderLayerOnPhoto(ctx, layer, scaleX, scaleY, targetSize);
+                    for (let l of layersList) {
+                        await renderLayerOnPhoto(ctx, l, scaleX, scaleY);
                     }
                     const dataUrl = canvas.toDataURL('image/png');
                     URL.revokeObjectURL(url);
@@ -860,7 +966,7 @@
             const card = document.createElement('div');
             card.className = 'preview-card';
             card.innerHTML = `
-                <img src="${res.dataUrl}" style="max-width:100%;">
+                <img src="${res.dataUrl}">
                 <div class="card-actions">
                     <button class="btn-small download-single" data-url="${res.dataUrl}" data-name="${res.name}">⬇️ Скачать</button>
                 </div>
@@ -879,7 +985,7 @@
     }
     
     async function downloadAllZip() {
-        if (!uploadedFiles.length) return alert("Нет фото для скачивания");
+        if (!uploadedFiles.length) return alert("Нет фото");
         const zip = new JSZip();
         for (let file of uploadedFiles) {
             const dataUrl = await applyLayersToFile(file);
@@ -894,11 +1000,10 @@
         URL.revokeObjectURL(a.href);
     }
     
-    // ---------- Инициализация интерфейса ----------
+    // ---------- Инициализация ----------
     function init() {
-        loadAllSettings();
+        loadFromLocalStorage();
         
-        // Главные кнопки
         document.getElementById('photoInput').addEventListener('change', (e) => {
             if (e.target.files.length) {
                 uploadedFiles.push(...Array.from(e.target.files));
@@ -912,11 +1017,11 @@
         });
         document.getElementById('downloadZipBtn').addEventListener('click', downloadAllZip);
         
-        // Конструктор
         const modal = document.getElementById('constructorModal');
         document.getElementById('openConstructorBtn').onclick = () => {
             loadTempFromCurrent();
             modal.style.display = 'flex';
+            setTimeout(resizeCanvas, 100);
         };
         document.getElementById('cancelConstructorBtn').onclick = () => {
             modal.style.display = 'none';
@@ -927,7 +1032,6 @@
             renderAllPreviews();
         };
         
-        // Переключение ориентации в конструкторе
         document.querySelectorAll('.orientation-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.orientation-btn').forEach(b => b.classList.remove('active'));
@@ -937,26 +1041,22 @@
             });
         });
         
-        // Кнопки добавления слоёв
         document.getElementById('addTextLayerBtn').addEventListener('click', addTextLayer);
         document.getElementById('addImageLayerBtn').addEventListener('click', addImageLayer);
-        document.getElementById('deleteLayerBtn').addEventListener('click', deleteSelectedLayer);
         
-        // Свойства
-        document.getElementById('propVisible').addEventListener('change', applyPropertyChanges);
-        document.getElementById('propText').addEventListener('input', applyPropertyChanges);
-        document.getElementById('propSize').addEventListener('input', (e) => {
-            document.getElementById('sizeValue').innerText = e.target.value;
-            applyPropertyChanges();
+        const opacitySlider = document.getElementById('propOpacity');
+        opacitySlider.addEventListener('input', (e) => updateOpacity(e.target.value));
+        const colorPicker = document.getElementById('propColor');
+        colorPicker.addEventListener('input', (e) => updateTextColor(e.target.value));
+        const imageUpload = document.getElementById('propImageUpload');
+        imageUpload.addEventListener('change', (e) => {
+            if (e.target.files.length) updateImageFile(e.target.files[0]);
+            e.target.value = '';
         });
-        document.getElementById('propColor').addEventListener('input', applyPropertyChanges);
-        document.getElementById('propOpacity').addEventListener('input', applyPropertyChanges);
-        document.getElementById('propImageUpload').addEventListener('change', applyPropertyChanges);
         
-        // Мышь на canvas
-        editorCanvas.addEventListener('mousedown', onCanvasMouseDown);
-        window.addEventListener('mousemove', onCanvasMouseMove);
-        window.addEventListener('mouseup', onCanvasMouseUp);
+        editorCanvas.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
         window.addEventListener('resize', () => {
             if (modal.style.display === 'flex') resizeCanvas();
         });
