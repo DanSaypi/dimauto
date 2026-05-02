@@ -3,69 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Конструктор наложений СТО</title>
+    <title>Редактор изображений СТО</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         * {
-            box-sizing: border-box;
-            user-select: none; /* предотвращает выделение при перетаскивании */
-        }
-        body {
-            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-            background: #f1f5f9;
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            background: #f3f4f6;
             padding: 20px;
         }
+
+        /* Главный контейнер */
         .app {
             max-width: 1400px;
             margin: 0 auto;
             background: white;
-            border-radius: 32px;
-            padding: 24px 28px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
+
+        /* Шапка */
         .header {
+            padding: 20px 28px;
+            background: white;
+            border-bottom: 1px solid #eef2f6;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            margin-bottom: 24px;
+            gap: 16px;
         }
-        button {
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .btn-primary {
             background: #3b82f6;
             border: none;
-            padding: 8px 20px;
+            padding: 8px 24px;
             border-radius: 40px;
             color: white;
             font-weight: 500;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: 0.2s;
         }
-        button:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
         .btn-outline {
             background: white;
-            color: #1e293b;
             border: 1px solid #cbd5e1;
+            color: #1e293b;
         }
+        .btn-outline:hover {
+            background: #f8fafc;
+            transform: translateY(-1px);
+        }
+        .btn-icon {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 12px;
+            transition: 0.1s;
+        }
+        .btn-icon:hover {
+            background: #f1f5f9;
+        }
+
+        /* Зона загрузки */
         .upload-area {
             background: #fefce8;
             border: 2px dashed #cbd5e1;
-            border-radius: 28px;
-            padding: 20px;
+            border-radius: 24px;
+            padding: 24px;
             text-align: center;
-            margin: 20px 0;
+            margin: 24px 28px;
         }
+        .upload-area p {
+            margin-bottom: 12px;
+            color: #475569;
+        }
+
+        /* Сетка превью */
         .previews-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 24px;
-            margin: 28px 0;
+            padding: 0 28px 28px 28px;
         }
         .preview-card {
-            background: #fff;
+            background: white;
             border-radius: 20px;
             overflow: hidden;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #eef2f6;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+        .preview-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 20px -12px rgba(0,0,0,0.15);
         }
         .preview-card img {
             width: 100%;
@@ -77,26 +127,35 @@
             padding: 12px;
             text-align: center;
         }
-        .download-all-btn {
+        .btn-small {
+            background: #f1f5f9;
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            border-radius: 30px;
+        }
+        .download-all {
             background: #8b5cf6;
-            width: 100%;
+            width: calc(100% - 56px);
+            margin: 0 28px 28px 28px;
             padding: 14px;
             font-size: 1rem;
-            margin-top: 16px;
+            border-radius: 60px;
         }
+
         /* Модальное окно конструктора */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
             z-index: 10000;
             justify-content: center;
             align-items: center;
         }
         .modal-content {
-            background: #fff;
+            background: white;
             border-radius: 32px;
             max-width: 95vw;
             max-height: 90vh;
@@ -104,15 +163,41 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
         .modal-header {
             padding: 16px 24px;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #eef2f6;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 12px;
+            background: white;
+        }
+        .modal-header h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .orientation-group {
+            display: flex;
+            gap: 8px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 60px;
+        }
+        .orient-btn {
+            background: transparent;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: #475569;
+        }
+        .orient-btn.active {
+            background: #3b82f6;
+            color: white;
         }
         .modal-body {
             display: flex;
@@ -120,23 +205,129 @@
             overflow: hidden;
             padding: 20px;
             gap: 20px;
+            background: #f9fafb;
         }
+        /* Левая панель — эстетичный скролл */
         .sidebar {
-            width: 340px;
-            background: #f8fafc;
+            width: 360px;
+            background: white;
             border-radius: 24px;
-            padding: 16px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 24px;
             overflow-y: auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+        .sidebar-section {
+            border-bottom: 1px solid #eef2f6;
+            padding-bottom: 20px;
+        }
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .input-sm {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            width: 100px;
+        }
+        .input-full {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        .layer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 280px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.1s;
+            border: 1px solid transparent;
+        }
+        .layer-item.selected {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+        .layer-icon {
+            font-size: 1.2rem;
+        }
+        .layer-name {
+            flex: 1;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .layer-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .layer-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0.6;
+        }
+        .layer-actions button:hover {
+            opacity: 1;
+        }
+        .align-icons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .align-icon {
+            background: #f1f5f9;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .align-icon:hover {
+            background: #e2e8f0;
+        }
+        /* Правая область холста */
         .canvas-area {
             flex: 1;
             background: #eef2ff;
             border-radius: 24px;
+            padding: 0;
             overflow: hidden;
             display: flex;
+            flex-direction: column;
         }
         .canvas-wrapper {
             flex: 1;
@@ -148,265 +339,181 @@
         }
         canvas {
             background: white;
+            border-radius: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border-radius: 16px;
             display: block;
             margin: auto;
         }
-        .layer-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .layer-item {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 8px 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-        .layer-item.selected {
-            border: 2px solid #f97316;
-            background: #fff7ed;
-        }
-        .layer-icon {
-            font-size: 20px;
-            width: 32px;
-        }
-        .layer-name {
-            flex: 1;
-            font-size: 0.85rem;
-            font-weight: 500;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-        .layer-actions {
-            display: flex;
-            gap: 6px;
-        }
-        .layer-actions button {
-            padding: 2px 6px;
-            font-size: 0.7rem;
-            background: #f1f5f9;
-            color: #1e293b;
-            border-radius: 20px;
-        }
-        .prop-group {
-            margin-top: 12px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 12px;
-        }
-        .prop-group label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            display: block;
-            margin: 6px 0 2px;
-        }
-        input[type="range"] { width: 100%; }
-        .size-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-top: 6px;
-            flex-wrap: wrap;
-        }
-        .size-row input {
-            width: 80px;
-            padding: 4px 6px;
-            border-radius: 12px;
-            border: 1px solid #cbd5e1;
-        }
-        .align-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin: 10px 0;
-        }
-        .align-btn {
-            background: #e2e8f0;
-            color: #1e293b;
-            padding: 4px 8px;
-            font-size: 0.7rem;
-            border-radius: 20px;
-            cursor: pointer;
-        }
         .modal-footer {
             padding: 16px 24px;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid #eef2f6;
             display: flex;
             justify-content: flex-end;
             gap: 12px;
+            background: white;
+        }
+        @media (max-width: 800px) {
+            .sidebar { width: 280px; }
+            .modal-body { flex-direction: column; }
+            .canvas-area { min-height: 400px; }
         }
     </style>
 </head>
 <body>
 <div class="app">
     <div class="header">
-        <h2>🖼️ Наложение элементов на фото</h2>
-        <button id="openConstructorBtn">🎨 Открыть конструктор слоёв</button>
+        <h1>✨ Редактор изображений</h1>
+        <button id="openConstructorBtn" class="btn-primary">🎨 Конструктор слоёв</button>
     </div>
     <div class="upload-area">
-        <p>📸 Загрузите фотографии (можно несколько)</p>
-        <input type="file" id="photoInput" multiple accept="image/jpeg,image/png,image/webp">
-        <button id="clearPhotosBtn" class="btn-outline">Очистить все фото</button>
+        <p>📸 Загрузите фотографии для наложения элементов</p>
+        <input type="file" id="photoInput" multiple accept="image/jpeg,image/png,image/webp" style="margin-bottom:12px;">
+        <button id="clearPhotosBtn" class="btn-outline" style="padding:6px 18px;">Очистить все фото</button>
     </div>
     <div id="previewsContainer" class="previews-grid"></div>
-    <button id="downloadZipBtn" class="download-all-btn">📦 Скачать всё ZIP-архивом</button>
+    <button id="downloadZipBtn" class="download-all btn-primary">📦 Скачать всё ZIP-архивом</button>
 </div>
 
-<div id="modal" class="modal">
+<!-- Модальное окно конструктора -->
+<div id="constructorModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>🎨 Конструктор слоёв</h3>
-            <div>
-                <button id="portraitBtn" class="btn-outline" style="margin-right:8px;">📱 Вертикальное</button>
-                <button id="landscapeBtn" class="btn-outline">🖥️ Горизонтальное</button>
+            <h3>🎨 Редактор слоёв</h3>
+            <div class="orientation-group">
+                <button data-orient="portrait" class="orient-btn active">📱 Вертикальный</button>
+                <button data-orient="landscape" class="orient-btn">🖥️ Горизонтальный</button>
             </div>
         </div>
         <div class="modal-body">
+            <!-- Левая панель -->
             <div class="sidebar">
-                <div style="display:flex; justify-content:space-between;">
-                    <strong>Слои</strong>
-                    <div>
-                        <button id="addTextBtn" class="btn-outline" style="padding:4px 10px;">+ Текст</button>
-                        <button id="addImageBtn" class="btn-outline" style="padding:4px 10px;">+ Изобр.</button>
+                <!-- Размер холста -->
+                <div class="sidebar-section">
+                    <div class="section-title">Размер холста (текущий шаблон)</div>
+                    <div class="flex-row">
+                        <span>Ш:</span>
+                        <input type="number" id="tmplW" class="input-sm" step="10">
+                        <span>В:</span>
+                        <input type="number" id="tmplH" class="input-sm" step="10">
+                        <button id="applyTmplSize" class="btn-outline" style="padding:4px 12px;">Применить</button>
                     </div>
                 </div>
-                <div id="layerList" class="layer-list"></div>
-                <div id="props" style="overflow-y:auto;">
-                    <div class="prop-group">
-                        <label>🌀 Прозрачность слоя</label>
-                        <input type="range" id="layerOpacity" min="0" max="1" step="0.01" value="1">
+                <!-- Цвет фона холста -->
+                <div class="sidebar-section">
+                    <div class="section-title">Цвет холста</div>
+                    <input type="color" id="canvasBgColor" value="#f8fafc" style="width:40px; height:40px; border-radius:20px; border:1px solid #ccc;">
+                </div>
+                <!-- Слои -->
+                <div class="sidebar-section">
+                    <div class="section-title">Слои</div>
+                    <div class="flex-row">
+                        <button id="addImageLayerBtn" class="btn-outline" style="padding:4px 12px;">+ Изображение</button>
+                        <button id="addTextLayerBtn" class="btn-outline" style="padding:4px 12px;">+ Текст</button>
                     </div>
-                    <div class="prop-group" id="textColorGroup" style="display:none;">
-                        <label>🎨 Цвет текста</label>
-                        <input type="color" id="textColor" value="#ffffff">
+                    <div id="layerList" class="layer-list"></div>
+                </div>
+                <!-- Размер выбранного слоя -->
+                <div class="sidebar-section" id="sizeSection" style="display:none;">
+                    <div class="section-title">Размер</div>
+                    <div class="flex-row">
+                        <span>Ш:</span>
+                        <input type="number" id="layerW" class="input-sm" step="1">
+                        <span>В:</span>
+                        <input type="number" id="layerH" class="input-sm" step="1">
+                        <button id="lockAspectBtn" class="btn-icon" style="font-size:1.2rem;">🔒</button>
                     </div>
-                    <div class="prop-group" id="textBgGroup" style="display:none;">
-                        <label>📦 Фон текста</label>
-                        <div class="size-row">
-                            <input type="color" id="bgColor" value="#000000">
-                            <span>Прозр.:</span>
-                            <input type="range" id="bgOpacity" min="0" max="1" step="0.01" value="0.5" style="width:80px;">
-                            <span>Скругл.:</span>
-                            <input type="number" id="bgRadius" value="8" style="width:50px;">px
-                        </div>
-                        <div class="size-row">
-                            <span>Отступ X:</span>
-                            <input type="number" id="bgPadX" value="8" style="width:50px;">px
-                            <span>Отступ Y:</span>
-                            <input type="number" id="bgPadY" value="4" style="width:50px;">px
-                        </div>
+                    <div id="fontSizeRow" style="display:none; margin-top:8px;">
+                        <span>Размер шрифта:</span>
+                        <input type="number" id="fontSizeVal" class="input-sm" step="1">
                     </div>
-                    <div class="prop-group" id="sizeGroup">
-                        <label>📐 Размер</label>
-                        <div class="size-row" id="sizeRowWH">
-                            <span>Ширина:</span>
-                            <input type="number" id="sizeW" step="1">
-                            <span>Высота:</span>
-                            <input type="number" id="sizeH" step="1">
-                            <button id="lockAspect" style="background:none; padding:4px 6px;">🔒</button>
-                        </div>
-                        <div class="size-row" id="sizeRowFont" style="display:none;">
-                            <span>Размер шрифта:</span>
-                            <input type="number" id="fontSize" step="1">
-                        </div>
+                </div>
+                <!-- Шрифт (только для текстовых слоёв) -->
+                <div class="sidebar-section" id="fontSection" style="display:none;">
+                    <div class="section-title">Шрифт</div>
+                    <div class="flex-row">
+                        <select id="fontFamily" class="input-full" style="width:140px;">
+                            <option value="Inter">Inter</option>
+                            <option value="Roboto">Roboto</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                        </select>
+                        <select id="fontWeight" class="input-sm">
+                            <option value="400">Regular</option>
+                            <option value="700">Bold</option>
+                            <option value="italic">Italic</option>
+                        </select>
                     </div>
-                    <div class="prop-group">
-                        <label>📐 Выравнивание</label>
-                        <div class="align-buttons">
-                            <button class="alignBtn" data-align="left">⬅️ Левый</button>
-                            <button class="alignBtn" data-align="right">➡️ Правый</button>
-                            <button class="alignBtn" data-align="top">⬆️ Верх</button>
-                            <button class="alignBtn" data-align="bottom">⬇️ Низ</button>
-                            <button class="alignBtn" data-align="hcenter">↔️ Центр X</button>
-                            <button class="alignBtn" data-align="vcenter">↕️ Центр Y</button>
-                        </div>
+                    <div class="flex-row" style="margin-top:8px;">
+                        <span>Размер:</span>
+                        <input type="number" id="fontSizeText" class="input-sm" step="1">
+                        <span>Цвет:</span>
+                        <input type="color" id="textColorPicker" value="#ffffff">
                     </div>
-                    <div class="prop-group">
-                        <label>🎨 Цвет фона холста</label>
-                        <input type="color" id="canvasBg" value="#f8fafc">
+                </div>
+                <!-- Выравнивание -->
+                <div class="sidebar-section">
+                    <div class="section-title">Выравнивание</div>
+                    <div>По холсту:</div>
+                    <div class="align-icons">
+                        <button class="align-icon" data-align="left">⬅️</button>
+                        <button class="align-icon" data-align="right">➡️</button>
+                        <button class="align-icon" data-align="top">⬆️</button>
+                        <button class="align-icon" data-align="bottom">⬇️</button>
+                        <button class="align-icon" data-align="hcenter">↔️</button>
+                        <button class="align-icon" data-align="vcenter">↕️</button>
                     </div>
-                    <div class="prop-group">
-                        <label>📏 Размер шаблона</label>
-                        <div class="size-row">
-                            <span>Ширина:</span>
-                            <input type="number" id="tmplW" step="10">
-                            <span>Высота:</span>
-                            <input type="number" id="tmplH" step="10">
-                            <button id="applyTmplSize" class="btn-outline" style="padding:4px 8px;">Применить</button>
-                        </div>
+                    <div style="margin-top:12px;">Между собой:</div>
+                    <div class="align-icons">
+                        <button class="align-icon" data-align-multi="left">⬅️</button>
+                        <button class="align-icon" data-align-multi="right">➡️</button>
+                        <button class="align-icon" data-align-multi="top">⬆️</button>
+                        <button class="align-icon" data-align-multi="bottom">⬇️</button>
+                        <button class="align-icon" data-align-multi="hcenter">↔️</button>
+                        <button class="align-icon" data-align-multi="vcenter">↕️</button>
                     </div>
                 </div>
             </div>
+            <!-- Холст -->
             <div class="canvas-area">
                 <div class="canvas-wrapper" id="canvasWrapper">
-                    <canvas id="mainCanvas" width="800" height="1066"></canvas>
+                    <canvas id="editorCanvas" width="800" height="1066"></canvas>
                 </div>
             </div>
         </div>
         <div class="modal-footer">
-            <button id="cancelBtn" class="btn-outline">Отмена</button>
-            <button id="saveBtn">💾 Сохранить и закрыть</button>
+            <button id="cancelConstructorBtn" class="btn-outline">Отмена</button>
+            <button id="applyConstructorBtn" class="btn-primary">Сохранить и закрыть</button>
         </div>
     </div>
 </div>
 
 <script>
-    // ---------- ГЛОБАЛЬНЫЕ ДАННЫЕ ----------
-    let portraitLayers = [];      // слои для вертикальной ориентации
-    let landscapeLayers = [];     // для горизонтальной
+    // ---------- ДАННЫЕ ----------
+    let portraitLayers = [];
+    let landscapeLayers = [];
     let activeOrientation = "portrait";
-    let selectedLayerIds = [];     // массив ID выбранных слоёв (для множественного выбора)
+    let selectedLayerIds = [];      // массив ID выбранных слоёв
+    let dragTarget = null;
+    let dragOffset = { x: 0, y: 0 };
+    let isResizing = false;
+    let resizeStart = { x: 0, y: 0, width: 0, height: 0, fontSize: 0 };
+    let aspectLock = true;
     
     let portraitSize = { w: 2250, h: 3000 };
     let landscapeSize = { w: 3000, h: 2250 };
     let canvasBg = "#f8fafc";
     
-    let tempLayers = [];           // копия для редактора
-    let tempSelected = [];         // временные выделенные ID
-    
-    // Переменные для перетаскивания и ресайза
-    let dragTargetId = null;
-    let dragOffset = { x: 0, y: 0 };
-    let isResizing = false;
-    let resizeData = null;
-    let aspectLock = true;
+    let tempLayers = [];
+    let tempSize = null;
     
     // DOM элементы
-    const modal = document.getElementById('modal');
-    const canvas = document.getElementById('mainCanvas');
+    const modal = document.getElementById('constructorModal');
+    const canvas = document.getElementById('editorCanvas');
     let ctx = canvas.getContext('2d');
     let canvasWidth = 0, canvasHeight = 0, scale = 1;
     const wrapper = document.getElementById('canvasWrapper');
     
-    // ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
-    function getCurrentSize() {
-        return activeOrientation === "portrait" ? portraitSize : landscapeSize;
-    }
-    
-    function getCurrentLayers() {
-        return activeOrientation === "portrait" ? portraitLayers : landscapeLayers;
-    }
-    
-    function setCurrentLayers(layers) {
-        if (activeOrientation === "portrait") portraitLayers = layers;
-        else landscapeLayers = layers;
-        saveToStorage();
-        refreshPreviews();  // обновить превью всех фото
-    }
-    
-    function generateId() {
-        return Date.now() + '-' + Math.random().toString(36).substr(2, 8);
-    }
-    
-    // Сохранение в localStorage
+    // Функции сохранения/загрузки
     function saveToStorage() {
         const data = {
             portraitLayers, landscapeLayers,
@@ -431,10 +538,12 @@
         }
         if (!portraitLayers) portraitLayers = [];
         if (!landscapeLayers) landscapeLayers = [];
-        // обеспечим наличие полей для текстовых слоёв
+        // инициализация полей для текстовых слоёв
         [portraitLayers, landscapeLayers].forEach(layers => {
             layers.forEach(l => {
                 if (l.type === 'text') {
+                    if (l.fontFamily === undefined) l.fontFamily = 'Inter';
+                    if (l.fontWeight === undefined) l.fontWeight = '400';
                     if (l.bgColor === undefined) l.bgColor = '#000000';
                     if (l.bgOpacity === undefined) l.bgOpacity = 0.5;
                     if (l.bgRadius === undefined) l.bgRadius = 8;
@@ -443,19 +552,762 @@
                 }
             });
         });
+        saveToStorage();
     }
     
-    // Обновить превью всех загруженных фото
+    function getCurrentSize() {
+        return activeOrientation === "portrait" ? portraitSize : landscapeSize;
+    }
+    
+    function getCurrentLayers() {
+        return activeOrientation === "portrait" ? portraitLayers : landscapeLayers;
+    }
+    
+    function setCurrentLayers(layers) {
+        if (activeOrientation === "portrait") portraitLayers = layers;
+        else landscapeLayers = layers;
+        saveToStorage();
+        refreshPreviews(); // обновить превью после изменения слоёв
+    }
+    
+    function generateId() {
+        return Date.now() + '-' + Math.random().toString(36).substr(2, 8);
+    }
+    
+    // ---------- Отрисовка холста конструктора ----------
+    function resizeCanvasToFit() {
+        const size = getCurrentSize();
+        const maxW = wrapper.clientWidth - 20;
+        const maxH = wrapper.clientHeight - 20;
+        const ratio = size.w / size.h;
+        let drawW = Math.min(maxW, 1000);
+        let drawH = drawW / ratio;
+        if (drawH > maxH) { drawH = maxH; drawW = drawH * ratio; }
+        canvas.width = drawW;
+        canvas.height = drawH;
+        canvasWidth = drawW;
+        canvasHeight = drawH;
+        scale = drawW / size.w;
+        drawCanvas();
+    }
+    
+    function drawCanvas() {
+        if (!ctx) return;
+        const size = getCurrentSize();
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        ctx.fillStyle = canvasBg;
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        // сетка
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 0.5;
+        ctx.font = "10px system-ui";
+        ctx.fillStyle = "#64748b";
+        for (let x = 0; x <= size.w; x += 300) {
+            ctx.beginPath();
+            ctx.moveTo(x*scale, 0); ctx.lineTo(x*scale, canvasHeight); ctx.stroke();
+            ctx.fillText(x, x*scale+2, 12);
+        }
+        for (let y = 0; y <= size.h; y += 300) {
+            ctx.beginPath();
+            ctx.moveTo(0, y*scale); ctx.lineTo(canvasWidth, y*scale); ctx.stroke();
+            ctx.fillText(y, 2, y*scale+10);
+        }
+        // слои
+        for (let layer of tempLayers) {
+            if (!layer.visible) continue;
+            if (layer.type === 'text') {
+                ctx.save();
+                ctx.globalAlpha = layer.opacity;
+                const fontString = `${layer.fontWeight || '400'} ${layer.fontSize}px "${layer.fontFamily || 'Inter'}"`;
+                ctx.font = fontString;
+                const metrics = ctx.measureText(layer.text);
+                const textW = metrics.width;
+                const textH = layer.fontSize;
+                // фон текста
+                if (layer.bgOpacity > 0) {
+                    ctx.fillStyle = layer.bgColor;
+                    ctx.globalAlpha = layer.opacity * layer.bgOpacity;
+                    const padX = (layer.bgPadX || 8) * scale;
+                    const padY = (layer.bgPadY || 4) * scale;
+                    const radius = (layer.bgRadius || 8) * scale;
+                    const x = layer.x * scale - padX;
+                    const y = layer.y * scale - padY;
+                    const w = textW + padX*2;
+                    const h = textH + padY*2;
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, w, h, radius);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = layer.opacity;
+                ctx.fillStyle = layer.color;
+                ctx.shadowBlur = 3;
+                ctx.shadowColor = "rgba(0,0,0,0.4)";
+                ctx.fillText(layer.text, layer.x*scale, (layer.y + layer.fontSize*0.7)*scale);
+                ctx.shadowBlur = 0;
+                if (selectedLayerIds.includes(layer.id)) {
+                    ctx.strokeStyle = "#f97316";
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(layer.x*scale, layer.y*scale, textW, layer.fontSize);
+                    const hx = (layer.x + textW)*scale - 6;
+                    const hy = (layer.y + layer.fontSize)*scale - 6;
+                    ctx.fillStyle = "#f97316";
+                    ctx.fillRect(hx, hy, 10, 10);
+                }
+                ctx.restore();
+            } else if (layer.type === 'image') {
+                if (layer.imageData) {
+                    const img = new Image();
+                    img.src = layer.imageData;
+                    if (img.complete) {
+                        const ratio = img.height / img.width;
+                        const drawH = layer.width * ratio;
+                        ctx.save();
+                        ctx.globalAlpha = layer.opacity;
+                        ctx.drawImage(img, layer.x*scale, layer.y*scale, layer.width*scale, drawH*scale);
+                        ctx.restore();
+                        if (selectedLayerIds.includes(layer.id)) {
+                            ctx.strokeStyle = "#f97316";
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, drawH*scale);
+                            const hx = (layer.x + layer.width)*scale - 6;
+                            const hy = (layer.y + drawH)*scale - 6;
+                            ctx.fillStyle = "#f97316";
+                            ctx.fillRect(hx, hy, 10, 10);
+                        }
+                    } else {
+                        img.onload = () => drawCanvas();
+                    }
+                } else {
+                    ctx.fillStyle = "#cbd5e1";
+                    ctx.fillRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
+                    ctx.fillStyle = "#475569";
+                    ctx.font = "12px system-ui";
+                    ctx.fillText("🖼️", (layer.x+10)*scale, (layer.y+20)*scale);
+                    if (selectedLayerIds.includes(layer.id)) {
+                        ctx.strokeStyle = "#f97316";
+                        ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
+                        const hx = (layer.x + layer.width)*scale - 6;
+                        const hy = (layer.y + layer.width)*scale - 6;
+                        ctx.fillStyle = "#f97316";
+                        ctx.fillRect(hx, hy, 10, 10);
+                    }
+                }
+            }
+        }
+    }
+    
+    // roundRect polyfill
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+            if (w < 2*r) r = w/2;
+            if (h < 2*r) r = h/2;
+            this.moveTo(x+r, y);
+            this.lineTo(x+w-r, y);
+            this.quadraticCurveTo(x+w, y, x+w, y+r);
+            this.lineTo(x+w, y+h-r);
+            this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+            this.lineTo(x+r, y+h);
+            this.quadraticCurveTo(x, y+h, x, y+h-r);
+            this.lineTo(x, y+r);
+            this.quadraticCurveTo(x, y, x+r, y);
+            return this;
+        };
+    }
+    
+    // ---------- Панорамирование ----------
+    let isPan = false;
+    let panStart = { x: 0, y: 0, left: 0, top: 0 };
+    function initPan() {
+        wrapper.addEventListener('mousedown', (e) => {
+            if (e.shiftKey && e.button === 0) {
+                isPan = true;
+                panStart.x = e.clientX;
+                panStart.y = e.clientY;
+                panStart.left = wrapper.scrollLeft;
+                panStart.top = wrapper.scrollTop;
+                wrapper.style.cursor = 'grabbing';
+                e.preventDefault();
+            }
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!isPan) return;
+            const dx = e.clientX - panStart.x;
+            const dy = e.clientY - panStart.y;
+            wrapper.scrollLeft = panStart.left - dx;
+            wrapper.scrollTop = panStart.top - dy;
+        });
+        window.addEventListener('mouseup', () => {
+            isPan = false;
+            wrapper.style.cursor = 'grab';
+        });
+        wrapper.style.cursor = 'grab';
+    }
+    
+    // ---------- Обработка мыши на canvas (перетаскивание, ресайз) ----------
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+        return { x, y };
+    }
+    
+    function getLayerUnder(px, py) {
+        const realX = px / scale;
+        const realY = py / scale;
+        for (let i = tempLayers.length-1; i >= 0; i--) {
+            const l = tempLayers[i];
+            if (!l.visible) continue;
+            if (l.type === 'text') {
+                const fontStr = `${l.fontWeight || '400'} ${l.fontSize}px "${l.fontFamily || 'Inter'}"`;
+                ctx.font = fontStr;
+                const w = ctx.measureText(l.text).width;
+                if (realX >= l.x && realX <= l.x + w && realY >= l.y && realY <= l.y + l.fontSize) return l;
+            } else {
+                let h = l.width;
+                if (l.imageData) {
+                    const img = new Image();
+                    img.src = l.imageData;
+                    if (img.complete) h = l.width * (img.height / img.width);
+                }
+                if (realX >= l.x && realX <= l.x + l.width && realY >= l.y && realY <= l.y + h) return l;
+            }
+        }
+        return null;
+    }
+    
+    function isOnHandle(px, py, layer) {
+        if (!layer || !selectedLayerIds.includes(layer.id)) return false;
+        const realX = px / scale;
+        const realY = py / scale;
+        if (layer.type === 'text') {
+            const fontStr = `${layer.fontWeight || '400'} ${layer.fontSize}px "${layer.fontFamily || 'Inter'}"`;
+            ctx.font = fontStr;
+            const w = ctx.measureText(layer.text).width;
+            const right = layer.x + w;
+            const bottom = layer.y + layer.fontSize;
+            const handleSize = 15 / scale;
+            return (realX >= right - handleSize && realX <= right + handleSize && realY >= bottom - handleSize && realY <= bottom + handleSize);
+        } else {
+            let h = layer.width;
+            if (layer.imageData) {
+                const img = new Image();
+                img.src = layer.imageData;
+                if (img.complete) h = layer.width * (img.height / img.width);
+            }
+            const right = layer.x + layer.width;
+            const bottom = layer.y + h;
+            const handleSize = 15 / scale;
+            return (realX >= right - handleSize && realX <= right + handleSize && realY >= bottom - handleSize && realY <= bottom + handleSize);
+        }
+    }
+    
+    function onCanvasMouseDown(e) {
+        const { x, y } = getMousePos(e);
+        const layerUnder = getLayerUnder(x, y);
+        // проверяем, есть ли выбранный слой под маркером ресайза
+        let selectedLayer = null;
+        for (let id of selectedLayerIds) {
+            const l = tempLayers.find(l => l.id === id);
+            if (l && isOnHandle(x, y, l)) {
+                selectedLayer = l;
+                break;
+            }
+        }
+        if (selectedLayer) {
+            isResizing = true;
+            const realX = x / scale;
+            const realY = y / scale;
+            if (selectedLayer.type === 'text') {
+                const fontStr = `${selectedLayer.fontWeight || '400'} ${selectedLayer.fontSize}px "${selectedLayer.fontFamily || 'Inter'}"`;
+                ctx.font = fontStr;
+                const w = ctx.measureText(selectedLayer.text).width;
+                resizeStart = { startX: realX, startY: realY, startFontSize: selectedLayer.fontSize, startWidth: w };
+            } else {
+                let h = selectedLayer.width;
+                if (selectedLayer.imageData) {
+                    const img = new Image();
+                    img.src = selectedLayer.imageData;
+                    if (img.complete) h = selectedLayer.width * (img.height / img.width);
+                }
+                resizeStart = { startX: realX, startY: realY, startWidth: selectedLayer.width, startHeight: h };
+            }
+            e.preventDefault();
+            return;
+        }
+        
+        if (layerUnder) {
+            // Мультивыбор с Shift
+            if (e.shiftKey) {
+                if (selectedLayerIds.includes(layerUnder.id)) {
+                    selectedLayerIds = selectedLayerIds.filter(id => id !== layerUnder.id);
+                } else {
+                    selectedLayerIds.push(layerUnder.id);
+                }
+            } else {
+                selectedLayerIds = [layerUnder.id];
+            }
+            dragTarget = layerUnder;
+            const realX = x / scale;
+            const realY = y / scale;
+            dragOffset.x = realX - layerUnder.x;
+            dragOffset.y = realY - layerUnder.y;
+            updateLayerListUI();
+            updatePropertiesPanel();
+            drawCanvas();
+            e.preventDefault();
+        }
+    }
+    
+    function onCanvasMouseMove(e) {
+        const { x, y } = getMousePos(e);
+        if (isResizing && selectedLayerIds.length > 0) {
+            const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+            if (layer) {
+                const realX = x / scale;
+                const realY = y / scale;
+                const dx = realX - resizeStart.startX;
+                const dy = realY - resizeStart.startY;
+                const size = getCurrentSize();
+                if (layer.type === 'text') {
+                    let newSize = Math.max(12, resizeStart.startFontSize + dy);
+                    newSize = Math.min(200, newSize);
+                    layer.fontSize = newSize;
+                    drawCanvas();
+                } else {
+                    let newW = Math.max(20, resizeStart.startWidth + dx);
+                    newW = Math.min(size.w - layer.x, newW);
+                    layer.width = newW;
+                    drawCanvas();
+                }
+            }
+            return;
+        }
+        if (dragTarget) {
+            const realX = x / scale;
+            const realY = y / scale;
+            const size = getCurrentSize();
+            let newX = realX - dragOffset.x;
+            let newY = realY - dragOffset.y;
+            if (dragTarget.type === 'text') {
+                const fontStr = `${dragTarget.fontWeight || '400'} ${dragTarget.fontSize}px "${dragTarget.fontFamily || 'Inter'}"`;
+                ctx.font = fontStr;
+                const w = ctx.measureText(dragTarget.text).width;
+                newX = Math.min(Math.max(0, newX), size.w - w);
+                newY = Math.min(Math.max(0, newY), size.h - dragTarget.fontSize);
+                dragTarget.x = newX;
+                dragTarget.y = newY;
+            } else {
+                let h = dragTarget.width;
+                if (dragTarget.imageData) {
+                    const img = new Image();
+                    img.src = dragTarget.imageData;
+                    if (img.complete) h = dragTarget.width * (img.height / img.width);
+                }
+                newX = Math.min(Math.max(0, newX), size.w - dragTarget.width);
+                newY = Math.min(Math.max(0, newY), size.h - h);
+                dragTarget.x = newX;
+                dragTarget.y = newY;
+            }
+            drawCanvas();
+        }
+    }
+    
+    function onCanvasMouseUp() {
+        if (isResizing || dragTarget) {
+            saveTempToCurrent();
+        }
+        dragTarget = null;
+        isResizing = false;
+    }
+    
+    // ---------- UI слоёв и свойств ----------
+    function updateLayerListUI() {
+        const container = document.getElementById('layerList');
+        container.innerHTML = '';
+        tempLayers.forEach(layer => {
+            const div = document.createElement('div');
+            div.className = `layer-item ${selectedLayerIds.includes(layer.id) ? 'selected' : ''}`;
+            div.onclick = (e) => {
+                if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
+                    if (e.shiftKey) {
+                        if (selectedLayerIds.includes(layer.id)) {
+                            selectedLayerIds = selectedLayerIds.filter(id => id !== layer.id);
+                        } else {
+                            selectedLayerIds.push(layer.id);
+                        }
+                    } else {
+                        selectedLayerIds = [layer.id];
+                    }
+                    updateLayerListUI();
+                    updatePropertiesPanel();
+                    drawCanvas();
+                }
+            };
+            const icon = layer.type === 'text' ? '📝' : '🖼️';
+            let name = layer.type === 'text' ? layer.text : (layer.imageData ? 'Изображение' : 'Нет картинки');
+            if (name.length > 20) name = name.substr(0, 18) + '...';
+            div.innerHTML = `
+                <div class="layer-icon">${icon}</div>
+                <div class="layer-name">${escapeHtml(name)}</div>
+                <div class="layer-actions">
+                    <button class="layer-vis-toggle" data-id="${layer.id}" title="Видимость">${layer.visible ? '👁️' : '🙈'}</button>
+                    <button class="layer-delete" data-id="${layer.id}" title="Удалить">🗑️</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        // события для кнопок
+        document.querySelectorAll('.layer-vis-toggle').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const l = tempLayers.find(l => l.id === id);
+                if (l) { l.visible = !l.visible; updateLayerListUI(); drawCanvas(); saveTempToCurrent(); }
+            };
+        });
+        document.querySelectorAll('.layer-delete').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                tempLayers = tempLayers.filter(l => l.id !== id);
+                selectedLayerIds = selectedLayerIds.filter(i => i !== id);
+                if (selectedLayerIds.length === 0 && tempLayers.length) selectedLayerIds = [tempLayers[0].id];
+                updateLayerListUI();
+                updatePropertiesPanel();
+                drawCanvas();
+                saveTempToCurrent();
+            };
+        });
+    }
+    
+    function updatePropertiesPanel() {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+        const sizeDiv = document.getElementById('sizeSection');
+        const fontDiv = document.getElementById('fontSection');
+        if (!layer) {
+            sizeDiv.style.display = 'none';
+            fontDiv.style.display = 'none';
+            return;
+        }
+        sizeDiv.style.display = 'block';
+        if (layer.type === 'text') {
+            fontDiv.style.display = 'block';
+            document.getElementById('fontFamily').value = layer.fontFamily || 'Inter';
+            document.getElementById('fontWeight').value = layer.fontWeight || '400';
+            document.getElementById('fontSizeText').value = layer.fontSize;
+            document.getElementById('textColorPicker').value = layer.color;
+            document.getElementById('fontSizeRow').style.display = 'none';
+            document.getElementById('layerW').parentElement.style.display = 'flex';
+            document.getElementById('layerW').value = layer.fontSize;
+            document.getElementById('layerH').disabled = true;
+            document.getElementById('lockAspectBtn').style.display = 'none';
+        } else {
+            fontDiv.style.display = 'none';
+            document.getElementById('fontSizeRow').style.display = 'none';
+            document.getElementById('layerW').parentElement.style.display = 'flex';
+            document.getElementById('layerW').value = layer.width;
+            document.getElementById('layerH').disabled = !aspectLock;
+            if (layer.imageData) {
+                const img = new Image();
+                img.src = layer.imageData;
+                if (img.complete) {
+                    const h = layer.width * (img.height / img.width);
+                    document.getElementById('layerH').value = Math.round(h);
+                }
+            } else {
+                document.getElementById('layerH').value = layer.width;
+            }
+            document.getElementById('lockAspectBtn').style.display = 'inline-block';
+            document.getElementById('lockAspectBtn').textContent = aspectLock ? '🔒' : '🔓';
+        }
+    }
+    
+    function applyLayerProps() {
+        const layer = tempLayers.find(l => l.id === selectedLayerIds[0]);
+        if (!layer) return;
+        if (layer.type === 'text') {
+            layer.fontFamily = document.getElementById('fontFamily').value;
+            layer.fontWeight = document.getElementById('fontWeight').value;
+            layer.fontSize = parseInt(document.getElementById('fontSizeText').value, 10);
+            layer.color = document.getElementById('textColorPicker').value;
+            const newFontSize = parseInt(document.getElementById('layerW').value, 10);
+            if (!isNaN(newFontSize)) layer.fontSize = Math.min(200, Math.max(12, newFontSize));
+        } else {
+            let newW = parseInt(document.getElementById('layerW').value, 10);
+            if (!isNaN(newW)) layer.width = Math.max(20, newW);
+            if (!aspectLock) {
+                let newH = parseInt(document.getElementById('layerH').value, 10);
+                if (!isNaN(newH) && layer.imageData) {
+                    const img = new Image();
+                    img.src = layer.imageData;
+                    if (img.complete) {
+                        const ratio = img.width / img.height;
+                        layer.width = newH * ratio;
+                        document.getElementById('layerW').value = Math.round(layer.width);
+                    }
+                }
+            }
+        }
+        drawCanvas();
+        saveTempToCurrent();
+    }
+    
+    // Выравнивание
+    function alignToCanvas(alignType) {
+        if (selectedLayerIds.length === 0) return;
+        const size = getCurrentSize();
+        for (let id of selectedLayerIds) {
+            const layer = tempLayers.find(l => l.id === id);
+            if (!layer) continue;
+            if (layer.type === 'text') {
+                const fontStr = `${layer.fontWeight || '400'} ${layer.fontSize}px "${layer.fontFamily || 'Inter'}"`;
+                ctx.font = fontStr;
+                const w = ctx.measureText(layer.text).width;
+                const h = layer.fontSize;
+                if (alignType === 'left') layer.x = 0;
+                else if (alignType === 'right') layer.x = size.w - w;
+                else if (alignType === 'top') layer.y = 0;
+                else if (alignType === 'bottom') layer.y = size.h - h;
+                else if (alignType === 'hcenter') layer.x = (size.w - w)/2;
+                else if (alignType === 'vcenter') layer.y = (size.h - h)/2;
+            } else {
+                let h = layer.width;
+                if (layer.imageData) {
+                    const img = new Image();
+                    img.src = layer.imageData;
+                    if (img.complete) h = layer.width * (img.height / img.width);
+                }
+                if (alignType === 'left') layer.x = 0;
+                else if (alignType === 'right') layer.x = size.w - layer.width;
+                else if (alignType === 'top') layer.y = 0;
+                else if (alignType === 'bottom') layer.y = size.h - h;
+                else if (alignType === 'hcenter') layer.x = (size.w - layer.width)/2;
+                else if (alignType === 'vcenter') layer.y = (size.h - h)/2;
+            }
+        }
+        drawCanvas();
+        saveTempToCurrent();
+    }
+    
+    function alignMutual(alignType) {
+        if (selectedLayerIds.length < 2) return;
+        const layers = selectedLayerIds.map(id => tempLayers.find(l => l.id === id)).filter(l => l);
+        if (layers.length < 2) return;
+        // используем первый слой как опорный
+        const ref = layers[0];
+        for (let i = 1; i < layers.length; i++) {
+            const layer = layers[i];
+            if (alignType === 'left') layer.x = ref.x;
+            else if (alignType === 'right') {
+                if (layer.type === 'text') {
+                    ctx.font = `${layer.fontWeight || '400'} ${layer.fontSize}px "${layer.fontFamily || 'Inter'}"`;
+                    const w = ctx.measureText(layer.text).width;
+                    layer.x = ref.x + (ref.type === 'text' ? 0 : ref.width) - w;
+                } else {
+                    let refW = ref.width, curW = layer.width;
+                    if (ref.imageData) {
+                        const img = new Image();
+                        img.src = ref.imageData;
+                        if (img.complete) refW = ref.width * (img.height / img.width);
+                    }
+                    if (layer.imageData) {
+                        const img = new Image();
+                        img.src = layer.imageData;
+                        if (img.complete) curW = layer.width * (img.height / img.width);
+                    }
+                    layer.x = ref.x + refW - curW;
+                }
+            }
+            else if (alignType === 'top') layer.y = ref.y;
+            else if (alignType === 'bottom') {
+                if (layer.type === 'text') layer.y = ref.y + ref.fontSize - layer.fontSize;
+                else {
+                    let refH = ref.width, curH = layer.width;
+                    if (ref.imageData) {
+                        const img = new Image();
+                        img.src = ref.imageData;
+                        if (img.complete) refH = ref.width * (img.height / img.width);
+                    }
+                    if (layer.imageData) {
+                        const img = new Image();
+                        img.src = layer.imageData;
+                        if (img.complete) curH = layer.width * (img.height / img.width);
+                    }
+                    layer.y = ref.y + refH - curH;
+                }
+            }
+            else if (alignType === 'hcenter') {
+                let refCenter = ref.x + (ref.type === 'text' ? 0 : ref.width)/2;
+                if (ref.type === 'text') {
+                    ctx.font = `${ref.fontWeight || '400'} ${ref.fontSize}px "${ref.fontFamily || 'Inter'}"`;
+                    refCenter = ref.x + ctx.measureText(ref.text).width/2;
+                }
+                if (layer.type === 'text') {
+                    ctx.font = `${layer.fontWeight || '400'} ${layer.fontSize}px "${layer.fontFamily || 'Inter'}"`;
+                    const w = ctx.measureText(layer.text).width;
+                    layer.x = refCenter - w/2;
+                } else {
+                    layer.x = refCenter - layer.width/2;
+                }
+            }
+            else if (alignType === 'vcenter') {
+                let refCenter = ref.y + (ref.type === 'text' ? ref.fontSize/2 : (ref.imageData ? ref.width * (new Image().height/ref.width)/2 : ref.width/2));
+                if (layer.type === 'text') layer.y = refCenter - layer.fontSize/2;
+                else {
+                    let h = layer.width;
+                    if (layer.imageData) {
+                        const img = new Image();
+                        img.src = layer.imageData;
+                        if (img.complete) h = layer.width * (img.height / img.width);
+                    }
+                    layer.y = refCenter - h/2;
+                }
+            }
+        }
+        drawCanvas();
+        saveTempToCurrent();
+    }
+    
+    // Добавление слоёв
+    function addTextLayer() {
+        const size = getCurrentSize();
+        const newLayer = {
+            id: generateId(),
+            type: 'text',
+            text: 'Новый текст',
+            fontSize: 48,
+            fontFamily: 'Inter',
+            fontWeight: '400',
+            color: '#ffffff',
+            bgColor: '#000000',
+            bgOpacity: 0.5,
+            bgRadius: 8,
+            bgPadX: 8,
+            bgPadY: 4,
+            x: size.w/2 - 100,
+            y: size.h/2,
+            opacity: 1,
+            visible: true
+        };
+        tempLayers.push(newLayer);
+        selectedLayerIds = [newLayer.id];
+        updateLayerListUI();
+        updatePropertiesPanel();
+        drawCanvas();
+        saveTempToCurrent();
+    }
+    
+    function addImageLayer() {
+        const size = getCurrentSize();
+        const newLayer = {
+            id: generateId(),
+            type: 'image',
+            imageData: null,
+            width: 150,
+            x: size.w/2 - 75,
+            y: size.h/2 - 50,
+            opacity: 1,
+            visible: true
+        };
+        tempLayers.push(newLayer);
+        selectedLayerIds = [newLayer.id];
+        updateLayerListUI();
+        updatePropertiesPanel();
+        drawCanvas();
+        saveTempToCurrent();
+        setTimeout(() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/png,image/jpeg,image/webp';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const layer = tempLayers.find(l => l.id === newLayer.id);
+                        if (layer) {
+                            layer.imageData = ev.target.result;
+                            updateLayerListUI();
+                            drawCanvas();
+                            saveTempToCurrent();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }, 50);
+    }
+    
+    function applyTemplateSize() {
+        const newW = parseInt(document.getElementById('tmplW').value, 10);
+        const newH = parseInt(document.getElementById('tmplH').value, 10);
+        if (isNaN(newW) || isNaN(newH) || newW < 100 || newH < 100) return;
+        if (activeOrientation === 'portrait') portraitSize = { w: newW, h: newH };
+        else landscapeSize = { w: newW, h: newH };
+        const size = getCurrentSize();
+        // подрезаем позиции слоёв
+        tempLayers.forEach(layer => {
+            if (layer.type === 'text') {
+                const fontStr = `${layer.fontWeight || '400'} ${layer.fontSize}px "${layer.fontFamily || 'Inter'}"`;
+                ctx.font = fontStr;
+                const w = ctx.measureText(layer.text).width;
+                layer.x = Math.min(layer.x, size.w - w);
+                layer.y = Math.min(layer.y, size.h - layer.fontSize);
+                if (layer.x < 0) layer.x = 0;
+                if (layer.y < 0) layer.y = 0;
+            } else {
+                let h = layer.width;
+                if (layer.imageData) {
+                    const img = new Image();
+                    img.src = layer.imageData;
+                    if (img.complete) h = layer.width * (img.height / img.width);
+                }
+                layer.x = Math.min(layer.x, size.w - layer.width);
+                layer.y = Math.min(layer.y, size.h - h);
+                if (layer.x < 0) layer.x = 0;
+                if (layer.y < 0) layer.y = 0;
+            }
+        });
+        resizeCanvasToFit();
+        drawCanvas();
+        saveTempToCurrent();
+    }
+    
+    function saveTempToCurrent() {
+        setCurrentLayers(JSON.parse(JSON.stringify(tempLayers)));
+    }
+    
+    function loadTempFromCurrent() {
+        tempLayers = JSON.parse(JSON.stringify(getCurrentLayers()));
+        if (tempLayers.length && selectedLayerIds.length === 0) selectedLayerIds = [tempLayers[0].id];
+        updateLayerListUI();
+        updatePropertiesPanel();
+        resizeCanvasToFit();
+        drawCanvas();
+        const cur = getCurrentSize();
+        document.getElementById('tmplW').value = cur.w;
+        document.getElementById('tmplH').value = cur.h;
+        document.getElementById('canvasBgColor').value = canvasBg;
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+    }
+    
+    // ---------- Наложение на реальные фото (исправленный баг) ----------
     let uploadedFiles = [];
     let isProcessing = false;
     let renderId = 0;
     
-    async function renderLayerOnPhoto(ctxPhoto, layer, sx, sy) {
+    async function renderOnPhoto(ctxPhoto, layer, sx, sy) {
         return new Promise((resolve) => {
             if (!layer.visible) return resolve();
             if (layer.type === 'text') {
                 const fontSizePx = layer.fontSize * sy;
-                ctxPhoto.font = `${fontSizePx}px system-ui, "Segoe UI"`;
+                const fontStr = `${layer.fontWeight || '400'} ${fontSizePx}px "${layer.fontFamily || 'Inter'}"`;
+                ctxPhoto.font = fontStr;
                 const metrics = ctxPhoto.measureText(layer.text);
                 const tw = metrics.width;
                 const th = fontSizePx;
@@ -516,7 +1368,7 @@
                 const sy = img.height / tSize.h;
                 (async () => {
                     for (let l of layers) {
-                        await renderLayerOnPhoto(ctx, l, sx, sy);
+                        await renderOnPhoto(ctx, l, sx, sy);
                     }
                     resolve(canvas.toDataURL('image/png'));
                     URL.revokeObjectURL(url);
@@ -577,724 +1429,10 @@
         URL.revokeObjectURL(a.href);
     }
     
-    // ---------- ОТРИСОВКА КОНСТРУКТОРА ----------
-    function resizeCanvasToFit() {
-        const size = getCurrentSize();
-        const maxW = wrapper.clientWidth - 20;
-        const maxH = wrapper.clientHeight - 20;
-        const ratio = size.w / size.h;
-        let drawW = Math.min(maxW, 1200);
-        let drawH = drawW / ratio;
-        if (drawH > maxH) { drawH = maxH; drawW = drawH * ratio; }
-        canvas.width = drawW;
-        canvas.height = drawH;
-        canvasWidth = drawW;
-        canvasHeight = drawH;
-        scale = drawW / size.w;
-        drawCanvas();
-    }
-    
-    function drawCanvas() {
-        if (!ctx) return;
-        const size = getCurrentSize();
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        ctx.fillStyle = canvasBg;
-        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-        // сетка с шагом 100px
-        ctx.strokeStyle = "#cbd5e1";
-        ctx.lineWidth = 0.5;
-        ctx.font = "9px system-ui";
-        ctx.fillStyle = "#64748b";
-        const step = 100;
-        for (let x = 0; x <= size.w; x += step) {
-            ctx.beginPath();
-            ctx.moveTo(x*scale, 0); ctx.lineTo(x*scale, canvasHeight); ctx.stroke();
-            if (x % 200 === 0) ctx.fillText(x, x*scale+2, 12);
-        }
-        for (let y = 0; y <= size.h; y += step) {
-            ctx.beginPath();
-            ctx.moveTo(0, y*scale); ctx.lineTo(canvasWidth, y*scale); ctx.stroke();
-            if (y % 200 === 0) ctx.fillText(y, 2, y*scale+10);
-        }
-        // рисуем слои (от нижнего к верхнему)
-        for (let layer of tempLayers) {
-            if (!layer.visible) continue;
-            if (layer.type === 'text') {
-                ctx.save();
-                ctx.globalAlpha = layer.opacity;
-                ctx.font = `${layer.fontSize}px system-ui`;
-                const metrics = ctx.measureText(layer.text);
-                const tw = metrics.width;
-                const th = layer.fontSize;
-                // фон текста
-                if (layer.bgOpacity > 0) {
-                    ctx.fillStyle = layer.bgColor;
-                    ctx.globalAlpha = layer.opacity * layer.bgOpacity;
-                    const padX = (layer.bgPadX || 8) * scale;
-                    const padY = (layer.bgPadY || 4) * scale;
-                    const radius = (layer.bgRadius || 8) * scale;
-                    const x = layer.x * scale - padX;
-                    const y = layer.y * scale - padY;
-                    const w = tw + padX*2;
-                    const h = th + padY*2;
-                    ctx.beginPath();
-                    ctx.roundRect(x, y, w, h, radius);
-                    ctx.fill();
-                }
-                ctx.globalAlpha = layer.opacity;
-                ctx.fillStyle = layer.color;
-                ctx.shadowBlur = 3;
-                ctx.shadowColor = "rgba(0,0,0,0.4)";
-                ctx.fillText(layer.text, layer.x*scale, (layer.y + layer.fontSize*0.7)*scale);
-                ctx.shadowBlur = 0;
-                if (tempSelected.includes(layer.id)) {
-                    ctx.strokeStyle = "#f97316";
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(layer.x*scale, layer.y*scale, tw, th);
-                    const hx = (layer.x + tw)*scale - 6;
-                    const hy = (layer.y + th)*scale - 6;
-                    ctx.fillStyle = "#f97316";
-                    ctx.fillRect(hx, hy, 10, 10);
-                }
-                ctx.restore();
-            } else if (layer.type === 'image') {
-                if (layer.imageData) {
-                    const img = new Image();
-                    img.src = layer.imageData;
-                    if (img.complete) {
-                        const ratio = img.height / img.width;
-                        const dh = layer.width * ratio;
-                        ctx.save();
-                        ctx.globalAlpha = layer.opacity;
-                        ctx.drawImage(img, layer.x*scale, layer.y*scale, layer.width*scale, dh*scale);
-                        ctx.restore();
-                        if (tempSelected.includes(layer.id)) {
-                            ctx.strokeStyle = "#f97316";
-                            ctx.lineWidth = 2;
-                            ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, dh*scale);
-                            const hx = (layer.x + layer.width)*scale - 6;
-                            const hy = (layer.y + dh)*scale - 6;
-                            ctx.fillStyle = "#f97316";
-                            ctx.fillRect(hx, hy, 10, 10);
-                        }
-                    } else {
-                        img.onload = () => drawCanvas();
-                    }
-                } else {
-                    ctx.fillStyle = "#cbd5e1";
-                    ctx.fillRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
-                    ctx.fillStyle = "#475569";
-                    ctx.font = "12px system-ui";
-                    ctx.fillText("🖼️", (layer.x+10)*scale, (layer.y+20)*scale);
-                    if (tempSelected.includes(layer.id)) {
-                        ctx.strokeStyle = "#f97316";
-                        ctx.strokeRect(layer.x*scale, layer.y*scale, layer.width*scale, layer.width*scale);
-                        const hx = (layer.x + layer.width)*scale - 6;
-                        const hy = (layer.y + layer.width)*scale - 6;
-                        ctx.fillStyle = "#f97316";
-                        ctx.fillRect(hx, hy, 10, 10);
-                    }
-                }
-            }
-        }
-    }
-    
-    if (!CanvasRenderingContext2D.prototype.roundRect) {
-        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-            if (w < 2*r) r = w/2;
-            if (h < 2*r) r = h/2;
-            this.moveTo(x+r, y);
-            this.lineTo(x+w-r, y);
-            this.quadraticCurveTo(x+w, y, x+w, y+r);
-            this.lineTo(x+w, y+h-r);
-            this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-            this.lineTo(x+r, y+h);
-            this.quadraticCurveTo(x, y+h, x, y+h-r);
-            this.lineTo(x, y+r);
-            this.quadraticCurveTo(x, y, x+r, y);
-            return this;
-        };
-    }
-    
-    // ---------- ПАНОРАМИРОВАНИЕ (Shift + мышь) ----------
-    let isPan = false;
-    let panStart = { x: 0, y: 0, left: 0, top: 0 };
-    function initPan() {
-        wrapper.addEventListener('mousedown', (e) => {
-            if (e.shiftKey && e.button === 0) {
-                isPan = true;
-                panStart.x = e.clientX;
-                panStart.y = e.clientY;
-                panStart.left = wrapper.scrollLeft;
-                panStart.top = wrapper.scrollTop;
-                wrapper.style.cursor = 'grabbing';
-                e.preventDefault();
-            }
-        });
-        window.addEventListener('mousemove', (e) => {
-            if (!isPan) return;
-            const dx = e.clientX - panStart.x;
-            const dy = e.clientY - panStart.y;
-            wrapper.scrollLeft = panStart.left - dx;
-            wrapper.scrollTop = panStart.top - dy;
-        });
-        window.addEventListener('mouseup', () => {
-            isPan = false;
-            wrapper.style.cursor = 'grab';
-        });
-        wrapper.style.cursor = 'grab';
-    }
-    
-    // ---------- ОБРАБОТКА МЫШИ НА КАНВАСЕ (перетаскивание, ресайз) ----------
-    function getMousePos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-        return { x, y };
-    }
-    
-    function getLayerUnder(px, py) {
-        const realX = px / scale;
-        const realY = py / scale;
-        for (let i = tempLayers.length-1; i >= 0; i--) {
-            const l = tempLayers[i];
-            if (!l.visible) continue;
-            if (l.type === 'text') {
-                ctx.font = `${l.fontSize}px system-ui`;
-                const w = ctx.measureText(l.text).width;
-                if (realX >= l.x && realX <= l.x + w && realY >= l.y && realY <= l.y + l.fontSize) return l;
-            } else {
-                let h = l.width;
-                if (l.imageData) {
-                    const img = new Image();
-                    img.src = l.imageData;
-                    if (img.complete) h = l.width * (img.height / img.width);
-                }
-                if (realX >= l.x && realX <= l.x + l.width && realY >= l.y && realY <= l.y + h) return l;
-            }
-        }
-        return null;
-    }
-    
-    function isOnHandle(px, py, layer) {
-        if (!layer || !tempSelected.includes(layer.id)) return false;
-        const realX = px / scale;
-        const realY = py / scale;
-        if (layer.type === 'text') {
-            ctx.font = `${layer.fontSize}px system-ui`;
-            const w = ctx.measureText(layer.text).width;
-            const right = layer.x + w;
-            const bottom = layer.y + layer.fontSize;
-            const handleSize = 15 / scale;
-            return (realX >= right - handleSize && realX <= right + handleSize && realY >= bottom - handleSize && realY <= bottom + handleSize);
-        } else {
-            let h = layer.width;
-            if (layer.imageData) {
-                const img = new Image();
-                img.src = layer.imageData;
-                if (img.complete) h = layer.width * (img.height / img.width);
-            }
-            const right = layer.x + layer.width;
-            const bottom = layer.y + h;
-            const handleSize = 15 / scale;
-            return (realX >= right - handleSize && realX <= right + handleSize && realY >= bottom - handleSize && realY <= bottom + handleSize);
-        }
-    }
-    
-    function onCanvasMouseDown(e) {
-        const { x, y } = getMousePos(e);
-        const selectedLayer = tempLayers.find(l => tempSelected.includes(l.id));
-        if (selectedLayer && isOnHandle(x, y, selectedLayer)) {
-            isResizing = true;
-            const realX = x / scale;
-            const realY = y / scale;
-            if (selectedLayer.type === 'text') {
-                ctx.font = `${selectedLayer.fontSize}px system-ui`;
-                const w = ctx.measureText(selectedLayer.text).width;
-                resizeData = { startX: realX, startY: realY, startFontSize: selectedLayer.fontSize, startWidth: w };
-            } else {
-                let h = selectedLayer.width;
-                if (selectedLayer.imageData) {
-                    const img = new Image();
-                    img.src = selectedLayer.imageData;
-                    if (img.complete) h = selectedLayer.width * (img.height / img.width);
-                }
-                resizeData = { startX: realX, startY: realY, startWidth: selectedLayer.width, startHeight: h };
-            }
-            e.preventDefault();
-            return;
-        }
-        const hit = getLayerUnder(x, y);
-        if (hit) {
-            if (!e.ctrlKey && !e.metaKey) {
-                tempSelected = [hit.id];
-            } else {
-                if (tempSelected.includes(hit.id)) {
-                    tempSelected = tempSelected.filter(id => id !== hit.id);
-                } else {
-                    tempSelected.push(hit.id);
-                }
-            }
-            dragTargetId = hit.id;
-            const realX = x / scale;
-            const realY = y / scale;
-            dragOffset.x = realX - hit.x;
-            dragOffset.y = realY - hit.y;
-            updateLayersListUI();
-            syncProperties();
-            drawCanvas();
-            e.preventDefault();
-        } else {
-            // клик по пустому месту – сброс выделения
-            if (!e.ctrlKey && !e.metaKey) {
-                tempSelected = [];
-                updateLayersListUI();
-                drawCanvas();
-            }
-        }
-    }
-    
-    function onCanvasMouseMove(e) {
-        const { x, y } = getMousePos(e);
-        if (isResizing && tempSelected.length === 1) {
-            const layer = tempLayers.find(l => l.id === tempSelected[0]);
-            if (layer) {
-                const realX = x / scale;
-                const realY = y / scale;
-                const dx = realX - resizeData.startX;
-                const dy = realY - resizeData.startY;
-                const size = getCurrentSize();
-                if (layer.type === 'text') {
-                    let newSize = Math.max(12, resizeData.startFontSize + dy);
-                    newSize = Math.min(200, newSize);
-                    layer.fontSize = newSize;
-                    drawCanvas();
-                } else {
-                    let newW = Math.max(20, resizeData.startWidth + dx);
-                    newW = Math.min(size.w - layer.x, newW);
-                    layer.width = newW;
-                    drawCanvas();
-                }
-            }
-            return;
-        }
-        if (dragTargetId) {
-            const layer = tempLayers.find(l => l.id === dragTargetId);
-            if (layer) {
-                const realX = x / scale;
-                const realY = y / scale;
-                let newX = realX - dragOffset.x;
-                let newY = realY - dragOffset.y;
-                const size = getCurrentSize();
-                if (layer.type === 'text') {
-                    ctx.font = `${layer.fontSize}px system-ui`;
-                    const w = ctx.measureText(layer.text).width;
-                    newX = Math.min(Math.max(0, newX), size.w - w);
-                    newY = Math.min(Math.max(0, newY), size.h - layer.fontSize);
-                    layer.x = newX;
-                    layer.y = newY;
-                } else {
-                    let h = layer.width;
-                    if (layer.imageData) {
-                        const img = new Image();
-                        img.src = layer.imageData;
-                        if (img.complete) h = layer.width * (img.height / img.width);
-                    }
-                    newX = Math.min(Math.max(0, newX), size.w - layer.width);
-                    newY = Math.min(Math.max(0, newY), size.h - h);
-                    layer.x = newX;
-                    layer.y = newY;
-                }
-                drawCanvas();
-            }
-        }
-    }
-    
-    function onCanvasMouseUp() {
-        if (isResizing || dragTargetId) {
-            // сохраняем изменения в основной стор
-            saveTempToCurrent();
-        }
-        dragTargetId = null;
-        isResizing = false;
-    }
-    
-    // ---------- UI СПИСКА СЛОЁВ И СВОЙСТВ ----------
-    function updateLayersListUI() {
-        const container = document.getElementById('layerList');
-        container.innerHTML = '';
-        tempLayers.forEach(layer => {
-            const div = document.createElement('div');
-            div.className = `layer-item ${tempSelected.includes(layer.id) ? 'selected' : ''}`;
-            div.onclick = (e) => {
-                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
-                if (e.ctrlKey || e.metaKey) {
-                    if (tempSelected.includes(layer.id)) tempSelected = tempSelected.filter(id => id !== layer.id);
-                    else tempSelected.push(layer.id);
-                } else {
-                    tempSelected = [layer.id];
-                }
-                updateLayersListUI();
-                syncProperties();
-                drawCanvas();
-            };
-            const icon = layer.type === 'text' ? '📝' : '🖼️';
-            let name = layer.type === 'text' ? layer.text : (layer.imageData ? 'Изображение' : 'Нет картинки');
-            if (name.length > 18) name = name.substr(0,15)+'...';
-            div.innerHTML = `
-                <div class="layer-icon">${icon}</div>
-                <div class="layer-name">${escapeHtml(name)}</div>
-                <div class="layer-actions">
-                    <input type="checkbox" class="layer-vis" data-id="${layer.id}" ${layer.visible ? 'checked' : ''}>
-                    <button class="del-layer" data-id="${layer.id}">✖</button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-        document.querySelectorAll('.layer-vis').forEach(cb => {
-            cb.onchange = (e) => {
-                const id = cb.dataset.id;
-                const l = tempLayers.find(l => l.id === id);
-                if (l) { l.visible = cb.checked; drawCanvas(); saveTempToCurrent(); }
-            };
-        });
-        document.querySelectorAll('.del-layer').forEach(btn => {
-            btn.onclick = (e) => {
-                const id = btn.dataset.id;
-                tempLayers = tempLayers.filter(l => l.id !== id);
-                tempSelected = tempSelected.filter(sid => sid !== id);
-                updateLayersListUI();
-                drawCanvas();
-                saveTempToCurrent();
-                e.stopPropagation();
-            };
-        });
-        syncProperties();
-    }
-    
-    function syncProperties() {
-        const layer = tempLayers.find(l => tempSelected.includes(l.id));
-        if (!layer || tempSelected.length !== 1) {
-            document.getElementById('textColorGroup').style.display = 'none';
-            document.getElementById('textBgGroup').style.display = 'none';
-            document.getElementById('sizeGroup').style.display = 'none';
-            return;
-        }
-        document.getElementById('sizeGroup').style.display = 'block';
-        document.getElementById('layerOpacity').value = layer.opacity;
-        if (layer.type === 'text') {
-            document.getElementById('textColorGroup').style.display = 'block';
-            document.getElementById('textBgGroup').style.display = 'block';
-            document.getElementById('textColor').value = layer.color;
-            document.getElementById('bgColor').value = layer.bgColor;
-            document.getElementById('bgOpacity').value = layer.bgOpacity;
-            document.getElementById('bgRadius').value = layer.bgRadius;
-            document.getElementById('bgPadX').value = layer.bgPadX;
-            document.getElementById('bgPadY').value = layer.bgPadY;
-            document.getElementById('sizeRowWH').style.display = 'none';
-            document.getElementById('sizeRowFont').style.display = 'flex';
-            document.getElementById('fontSize').value = layer.fontSize;
-        } else {
-            document.getElementById('textColorGroup').style.display = 'none';
-            document.getElementById('textBgGroup').style.display = 'none';
-            document.getElementById('sizeRowWH').style.display = 'flex';
-            document.getElementById('sizeRowFont').style.display = 'none';
-            document.getElementById('sizeW').value = layer.width;
-            if (layer.imageData) {
-                const img = new Image();
-                img.src = layer.imageData;
-                if (img.complete) {
-                    const h = layer.width * (img.height / img.width);
-                    document.getElementById('sizeH').value = Math.round(h);
-                }
-            } else {
-                document.getElementById('sizeH').value = layer.width;
-            }
-        }
-    }
-    
-    function applyProps() {
-        const layer = tempLayers.find(l => tempSelected.includes(l.id));
-        if (!layer || tempSelected.length !== 1) return;
-        layer.opacity = parseFloat(document.getElementById('layerOpacity').value);
-        if (layer.type === 'text') {
-            layer.color = document.getElementById('textColor').value;
-            layer.bgColor = document.getElementById('bgColor').value;
-            layer.bgOpacity = parseFloat(document.getElementById('bgOpacity').value);
-            layer.bgRadius = parseInt(document.getElementById('bgRadius').value, 10);
-            layer.bgPadX = parseInt(document.getElementById('bgPadX').value, 10);
-            layer.bgPadY = parseInt(document.getElementById('bgPadY').value, 10);
-            const newFont = parseInt(document.getElementById('fontSize').value, 10);
-            if (!isNaN(newFont)) layer.fontSize = Math.min(200, Math.max(12, newFont));
-        } else {
-            const newW = parseInt(document.getElementById('sizeW').value, 10);
-            if (!isNaN(newW)) layer.width = Math.max(20, newW);
-            if (!aspectLock) {
-                const newH = parseInt(document.getElementById('sizeH').value, 10);
-                if (!isNaN(newH) && layer.imageData) {
-                    const img = new Image();
-                    img.src = layer.imageData;
-                    if (img.complete) {
-                        const ratio = img.width / img.height;
-                        layer.width = newH * ratio;
-                        document.getElementById('sizeW').value = Math.round(layer.width);
-                    }
-                }
-            }
-        }
-        drawCanvas();
-        saveTempToCurrent();
-    }
-    
-    // Выравнивание (для одного или нескольких слоёв)
-    function alignLayers(alignType) {
-        if (tempSelected.length === 0) return;
-        const layersToAlign = tempLayers.filter(l => tempSelected.includes(l.id));
-        const size = getCurrentSize();
-        if (layersToAlign.length === 1) {
-            const l = layersToAlign[0];
-            if (l.type === 'text') {
-                ctx.font = `${l.fontSize}px system-ui`;
-                const w = ctx.measureText(l.text).width;
-                const h = l.fontSize;
-                if (alignType === 'left') l.x = 0;
-                else if (alignType === 'right') l.x = size.w - w;
-                else if (alignType === 'top') l.y = 0;
-                else if (alignType === 'bottom') l.y = size.h - h;
-                else if (alignType === 'hcenter') l.x = (size.w - w) / 2;
-                else if (alignType === 'vcenter') l.y = (size.h - h) / 2;
-            } else {
-                let h = l.width;
-                if (l.imageData) {
-                    const img = new Image();
-                    img.src = l.imageData;
-                    if (img.complete) h = l.width * (img.height / img.width);
-                }
-                if (alignType === 'left') l.x = 0;
-                else if (alignType === 'right') l.x = size.w - l.width;
-                else if (alignType === 'top') l.y = 0;
-                else if (alignType === 'bottom') l.y = size.h - h;
-                else if (alignType === 'hcenter') l.x = (size.w - l.width) / 2;
-                else if (alignType === 'vcenter') l.y = (size.h - h) / 2;
-            }
-        } else {
-            // несколько слоёв: выравнивание относительно друг друга
-            if (alignType === 'left') {
-                let minX = Math.min(...layersToAlign.map(l => l.x));
-                layersToAlign.forEach(l => l.x = minX);
-            } else if (alignType === 'right') {
-                let maxRight = Math.max(...layersToAlign.map(l => {
-                    if (l.type === 'text') {
-                        ctx.font = `${l.fontSize}px system-ui`;
-                        return l.x + ctx.measureText(l.text).width;
-                    } else return l.x + l.width;
-                }));
-                layersToAlign.forEach(l => {
-                    if (l.type === 'text') {
-                        ctx.font = `${l.fontSize}px system-ui`;
-                        l.x = maxRight - ctx.measureText(l.text).width;
-                    } else l.x = maxRight - l.width;
-                });
-            } else if (alignType === 'top') {
-                let minY = Math.min(...layersToAlign.map(l => l.y));
-                layersToAlign.forEach(l => l.y = minY);
-            } else if (alignType === 'bottom') {
-                let maxBottom = Math.max(...layersToAlign.map(l => {
-                    if (l.type === 'text') return l.y + l.fontSize;
-                    else {
-                        let h = l.width;
-                        if (l.imageData) {
-                            const img = new Image();
-                            img.src = l.imageData;
-                            if (img.complete) h = l.width * (img.height / img.width);
-                        }
-                        return l.y + h;
-                    }
-                }));
-                layersToAlign.forEach(l => {
-                    if (l.type === 'text') l.y = maxBottom - l.fontSize;
-                    else {
-                        let h = l.width;
-                        if (l.imageData) {
-                            const img = new Image();
-                            img.src = l.imageData;
-                            if (img.complete) h = l.width * (img.height / img.width);
-                        }
-                        l.y = maxBottom - h;
-                    }
-                });
-            } else if (alignType === 'hcenter') {
-                let centerX = layersToAlign.reduce((sum, l) => {
-                    if (l.type === 'text') {
-                        ctx.font = `${l.fontSize}px system-ui`;
-                        return sum + (l.x + ctx.measureText(l.text).width/2);
-                    } else return sum + (l.x + l.width/2);
-                }, 0) / layersToAlign.length;
-                layersToAlign.forEach(l => {
-                    if (l.type === 'text') {
-                        ctx.font = `${l.fontSize}px system-ui`;
-                        l.x = centerX - ctx.measureText(l.text).width/2;
-                    } else l.x = centerX - l.width/2;
-                });
-            } else if (alignType === 'vcenter') {
-                let centerY = layersToAlign.reduce((sum, l) => {
-                    if (l.type === 'text') return sum + (l.y + l.fontSize/2);
-                    else {
-                        let h = l.width;
-                        if (l.imageData) {
-                            const img = new Image();
-                            img.src = l.imageData;
-                            if (img.complete) h = l.width * (img.height / img.width);
-                        }
-                        return sum + (l.y + h/2);
-                    }
-                }, 0) / layersToAlign.length;
-                layersToAlign.forEach(l => {
-                    if (l.type === 'text') l.y = centerY - l.fontSize/2;
-                    else {
-                        let h = l.width;
-                        if (l.imageData) {
-                            const img = new Image();
-                            img.src = l.imageData;
-                            if (img.complete) h = l.width * (img.height / img.width);
-                        }
-                        l.y = centerY - h/2;
-                    }
-                });
-            }
-        }
-        drawCanvas();
-        saveTempToCurrent();
-    }
-    
-    function addTextLayer() {
-        const size = getCurrentSize();
-        const newLayer = {
-            id: generateId(),
-            type: 'text',
-            text: 'Новый текст',
-            fontSize: 48,
-            color: '#ffffff',
-            bgColor: '#000000',
-            bgOpacity: 0.5,
-            bgRadius: 8,
-            bgPadX: 8,
-            bgPadY: 4,
-            x: size.w/2 - 100,
-            y: size.h/2,
-            opacity: 1,
-            visible: true
-        };
-        tempLayers.push(newLayer);
-        tempSelected = [newLayer.id];
-        updateLayersListUI();
-        drawCanvas();
-        saveTempToCurrent();
-    }
-    
-    function addImageLayer() {
-        const size = getCurrentSize();
-        const newLayer = {
-            id: generateId(),
-            type: 'image',
-            imageData: null,
-            width: 150,
-            x: size.w/2 - 75,
-            y: size.h/2 - 50,
-            opacity: 1,
-            visible: true
-        };
-        tempLayers.push(newLayer);
-        tempSelected = [newLayer.id];
-        updateLayersListUI();
-        drawCanvas();
-        saveTempToCurrent();
-        setTimeout(() => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/png,image/jpeg,image/webp';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        const layer = tempLayers.find(l => l.id === newLayer.id);
-                        if (layer) {
-                            layer.imageData = ev.target.result;
-                            updateLayersListUI();
-                            drawCanvas();
-                            saveTempToCurrent();
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-            input.click();
-        }, 50);
-    }
-    
-    function applyTemplateSize() {
-        const newW = parseInt(document.getElementById('tmplW').value, 10);
-        const newH = parseInt(document.getElementById('tmplH').value, 10);
-        if (isNaN(newW) || isNaN(newH) || newW < 100 || newH < 100) return;
-        if (activeOrientation === 'portrait') portraitSize = { w: newW, h: newH };
-        else landscapeSize = { w: newW, h: newH };
-        const size = getCurrentSize();
-        tempLayers.forEach(layer => {
-            if (layer.type === 'text') {
-                ctx.font = `${layer.fontSize}px system-ui`;
-                const w = ctx.measureText(layer.text).width;
-                layer.x = Math.min(layer.x, size.w - w);
-                layer.y = Math.min(layer.y, size.h - layer.fontSize);
-                if (layer.x < 0) layer.x = 0;
-                if (layer.y < 0) layer.y = 0;
-            } else {
-                let h = layer.width;
-                if (layer.imageData) {
-                    const img = new Image();
-                    img.src = layer.imageData;
-                    if (img.complete) h = layer.width * (img.height / img.width);
-                }
-                layer.x = Math.min(layer.x, size.w - layer.width);
-                layer.y = Math.min(layer.y, size.h - h);
-                if (layer.x < 0) layer.x = 0;
-                if (layer.y < 0) layer.y = 0;
-            }
-        });
-        resizeCanvasToFit();
-        drawCanvas();
-        saveTempToCurrent();
-    }
-    
-    function saveTempToCurrent() {
-        setCurrentLayers(JSON.parse(JSON.stringify(tempLayers)));
-    }
-    
-    function loadTempFromCurrent() {
-        tempLayers = JSON.parse(JSON.stringify(getCurrentLayers()));
-        tempSelected = tempLayers.length ? [tempLayers[0].id] : [];
-        updateLayersListUI();
-        resizeCanvasToFit();
-        drawCanvas();
-        document.getElementById('tmplW').value = getCurrentSize().w;
-        document.getElementById('tmplH').value = getCurrentSize().h;
-        document.getElementById('canvasBg').value = canvasBg;
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    // ---------- ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ ----------
+    // ---------- Инициализация ----------
     window.onload = () => {
         loadFromStorage();
-        // фото
+        // обработчики главной страницы
         document.getElementById('photoInput').onchange = (e) => {
             if (e.target.files.length) {
                 uploadedFiles.push(...Array.from(e.target.files));
@@ -1305,7 +1443,6 @@
         document.getElementById('clearPhotosBtn').onclick = () => { uploadedFiles = []; refreshPreviews(); };
         document.getElementById('downloadZipBtn').onclick = downloadZip;
         
-        // конструктор
         const openBtn = document.getElementById('openConstructorBtn');
         openBtn.onclick = () => {
             loadTempFromCurrent();
@@ -1315,46 +1452,49 @@
                 initPan();
             }, 100);
         };
-        document.getElementById('cancelBtn').onclick = () => { modal.style.display = 'none'; };
-        document.getElementById('saveBtn').onclick = () => { modal.style.display = 'none'; };
+        document.getElementById('cancelConstructorBtn').onclick = () => { modal.style.display = 'none'; };
+        document.getElementById('applyConstructorBtn').onclick = () => { modal.style.display = 'none'; };
         
-        document.getElementById('portraitBtn').onclick = () => {
-            activeOrientation = 'portrait';
-            loadTempFromCurrent();
-        };
-        document.getElementById('landscapeBtn').onclick = () => {
-            activeOrientation = 'landscape';
-            loadTempFromCurrent();
-        };
-        
-        document.getElementById('addTextBtn').onclick = addTextLayer;
-        document.getElementById('addImageBtn').onclick = addImageLayer;
-        
-        document.getElementById('layerOpacity').oninput = () => applyProps();
-        document.getElementById('textColor').oninput = () => applyProps();
-        document.getElementById('bgColor').oninput = () => applyProps();
-        document.getElementById('bgOpacity').oninput = () => applyProps();
-        document.getElementById('bgRadius').oninput = () => applyProps();
-        document.getElementById('bgPadX').oninput = () => applyProps();
-        document.getElementById('bgPadY').oninput = () => applyProps();
-        document.getElementById('fontSize').onchange = () => applyProps();
-        document.getElementById('sizeW').onchange = () => applyProps();
-        document.getElementById('sizeH').onchange = () => applyProps();
-        document.getElementById('lockAspect').onclick = () => {
-            aspectLock = !aspectLock;
-            document.getElementById('lockAspect').textContent = aspectLock ? '🔒' : '🔓';
-            document.getElementById('sizeH').disabled = !aspectLock;
-        };
-        document.querySelectorAll('.alignBtn').forEach(btn => {
-            btn.onclick = () => alignLayers(btn.dataset.align);
+        // ориентация
+        document.querySelectorAll('.orient-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.orient-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeOrientation = btn.dataset.orient;
+                loadTempFromCurrent();
+            };
         });
-        document.getElementById('canvasBg').oninput = (e) => {
+        
+        document.getElementById('addTextLayerBtn').onclick = addTextLayer;
+        document.getElementById('addImageLayerBtn').onclick = addImageLayer;
+        
+        // свойства слоя
+        const inputs = ['layerW', 'layerH', 'fontFamily', 'fontWeight', 'fontSizeText', 'textColorPicker'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('change', applyLayerProps);
+            document.getElementById(id).addEventListener('input', applyLayerProps);
+        });
+        document.getElementById('lockAspectBtn').onclick = () => {
+            aspectLock = !aspectLock;
+            document.getElementById('lockAspectBtn').textContent = aspectLock ? '🔒' : '🔓';
+            document.getElementById('layerH').disabled = !aspectLock;
+            applyLayerProps();
+        };
+        // выравнивание
+        document.querySelectorAll('[data-align]').forEach(btn => {
+            btn.onclick = () => alignToCanvas(btn.dataset.align);
+        });
+        document.querySelectorAll('[data-align-multi]').forEach(btn => {
+            btn.onclick = () => alignMutual(btn.dataset.alignMulti);
+        });
+        // размер холста и цвет
+        document.getElementById('applyTmplSize').onclick = applyTemplateSize;
+        document.getElementById('canvasBgColor').oninput = (e) => {
             canvasBg = e.target.value;
             drawCanvas();
             saveToStorage();
         };
-        document.getElementById('applyTmplSize').onclick = applyTemplateSize;
-        
+        // мышь на canvas
         canvas.addEventListener('mousedown', onCanvasMouseDown);
         window.addEventListener('mousemove', onCanvasMouseMove);
         window.addEventListener('mouseup', onCanvasMouseUp);
